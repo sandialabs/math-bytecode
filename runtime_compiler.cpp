@@ -20,6 +20,7 @@ enum token : std::size_t {
   token_double,
   token_identifier,
   token_statement_end,
+  token_argument_separator,
   token_count
 };
 
@@ -40,6 +41,8 @@ enum production : std::size_t {
   production_decay_to_leaf,
   production_read,
   production_subexpression,
+  production_unary_call,
+  production_binary_call,
   production_sum,
   production_difference,
   production_product,
@@ -70,6 +73,7 @@ parsegen::language build_language() {
   l.tokens[token_double] = {"double", "double" + space_regex};
   l.tokens[token_identifier] = {"identifier", "[_A-Za-z][_A-Za-z0-9]*" + space_regex};
   l.tokens[token_statement_end] = {"statement_end", ";" + space_regex};
+  l.tokens[token_argument_separator] = {"argument_separator", "," + space_regex};
   l.productions.resize(production_count);
   l.productions[production_program] =
   {"program", {"statements"}};
@@ -103,6 +107,10 @@ parsegen::language build_language() {
   {"leaf", {"mutable"}};
   l.productions[production_subexpression] =
   {"leaf", {"open_subexpression", "immutable", "close_subexpression"}};
+  l.productions[production_unary_call] =
+  {"leaf", {"identifier", "open_subexpression", "immutable", "close_subexpression"}};
+  l.productions[production_binary_call] =
+  {"leaf", {"identifier", "open_subexpression", "immutable", "argument_separator", "immutable", "close_subexpression"}};
   l.productions[production_sum] =
   {"sum_or_difference", {"sum_or_difference", "plus", "product_or_quotient"}};
   l.productions[production_difference] =
@@ -133,6 +141,7 @@ enum class instruction_code {
   divide,
   negate,
   assign_constant,
+  sqrt,
 };
 
 class named_instruction {
@@ -192,6 +201,11 @@ std::ostream& operator<<(
       s << op.result_name << " = "
         << op.constant << '\n';
       break;
+    }
+    case instruction_code::sqrt:
+    {
+      s << op.result_name << " = sqrt("
+        << op.left_name << ")\n";
     }
   }
   return s;
@@ -271,6 +285,26 @@ class reader : public parsegen::reader
       case production_subexpression:
       {
         return std::move(rhs.at(1));
+      }
+      case production_unary_call:
+      {
+        auto result = get_temporary();
+        auto function_name =
+          remove_trailing_space(
+              std::any_cast<std::string&&>(
+                std::move(rhs.at(0))));
+        named_instruction op;
+        op.result_name = result;
+        if (function_name == "sqrt") {
+          op.code = instruction_code::sqrt;
+        } else {
+          throw parsegen::parse_error("unknown function name");
+        }
+        op.left_name =
+          std::any_cast<std::string&&>(
+              std::move(rhs.at(2)));
+        instructions.push_back(op);
+        return result;
       }
       case production_sum:
       {
