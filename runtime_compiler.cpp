@@ -224,6 +224,64 @@ std::ostream& operator<<(
   return s;
 }
 
+std::ostream& operator<<(
+    std::ostream& s, instruction const& op)
+{
+  switch (op.code) {
+    case instruction_code::copy:
+    {
+      s << "$" << op.result_register << " = $" << op.input_registers.left << '\n';
+      break;
+    }
+    case instruction_code::add:
+    {
+      s << "$" << op.result_register << " = $"
+        << op.input_registers.left << " + $"
+        << op.input_registers.right << '\n';
+      break;
+    }
+    case instruction_code::subtract:
+    {
+      s << "$" << op.result_register << " = $"
+        << op.input_registers.left << " - $"
+        << op.input_registers.right << '\n';
+      break;
+    }
+    case instruction_code::multiply:
+    {
+      s << "$" << op.result_register << " = $"
+        << op.input_registers.left << " * $"
+        << op.input_registers.right << '\n';
+      break;
+    }
+    case instruction_code::divide:
+    {
+      s << "$" << op.result_register << " = $"
+        << op.input_registers.left << " / $"
+        << op.input_registers.right << '\n';
+      break;
+    }
+    case instruction_code::negate:
+    {
+      s << "$" << op.result_register << " = -$"
+        << op.input_registers.left << '\n';
+      break;
+    }
+    case instruction_code::assign_constant:
+    {
+      s << "$" << op.result_register << " = "
+        << op.constant << '\n';
+      break;
+    }
+    case instruction_code::sqrt:
+    {
+      s << "$" << op.result_register << " = sqrt($"
+        << op.input_registers.left << ")\n";
+    }
+  }
+  return s;
+}
+
 class reader : public parsegen::reader
 {
  public:
@@ -255,6 +313,10 @@ class reader : public parsegen::reader
         for (auto& lr : live_ranges) {
           std::cout << lr.name << " at register " << lr.register_assigned
             << " from " << lr.when_written_to << " to " << lr.when_last_read << '\n';
+        }
+        generate_instructions();
+        for (std::size_t i = 0; i < instructions.size(); ++i) {
+          std::cout << i << ": " << instructions[i];
         }
         break;
       }
@@ -469,8 +531,34 @@ class reader : public parsegen::reader
           &i);
     }
   }
+  void generate_instructions()
+  {
+    instructions.resize(named_instructions.size());
+    for (std::size_t i = 0; i < instructions.size(); ++i) {
+      instructions[i].code = named_instructions[i].code;
+      if (named_instructions[i].code == instruction_code::assign_constant) {
+        instructions[i].constant = named_instructions[i].constant;
+      }
+    }
+    for (auto& lr : live_ranges) {
+      auto first = std::size_t(std::max(lr.when_written_to, 0));
+      auto last = std::size_t(std::max(lr.when_last_read + 1, lr.when_written_to));
+      for (std::size_t i = first; i < last; ++i) {
+        if (named_instructions[i].result_name == lr.name) {
+          instructions[i].result_register = lr.register_assigned;
+        }
+        if (named_instructions[i].left_name == lr.name) {
+          instructions[i].input_registers.left = lr.register_assigned;
+        }
+        if (named_instructions[i].right_name == lr.name) {
+          instructions[i].input_registers.right = lr.register_assigned;
+        }
+      }
+    }
+  }
   int next_temporary{0};
   std::vector<named_instruction> named_instructions;
+  std::vector<instruction> instructions;
   std::vector<live_range> live_ranges;
   int register_count{0};
 };
