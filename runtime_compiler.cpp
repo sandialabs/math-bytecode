@@ -221,9 +221,13 @@ class reader : public parsegen::reader
     switch (production) {
       case production_program:
       {
-        for (auto& op : instructions)
-        {
-          std::cout << op;
+        for (std::size_t i = 0; i < instructions.size(); ++i) {
+          std::cout << i << ": " << instructions[i];
+        }
+        compute_live_ranges();
+        for (auto& lr : live_ranges) {
+          std::cout << lr.name << " at register " << lr.register_assigned
+            << " from " << lr.when_written_to << " to " << lr.when_last_read << '\n';
         }
         break;
       }
@@ -335,13 +339,93 @@ class reader : public parsegen::reader
     }
     return std::any();
   }
+ private:
   std::string get_temporary()
   {
     return std::string("tmp") + std::to_string(++next_temporary);
   }
- private:
+  struct live_range {
+    std::string name;
+    int when_written_to;
+    int when_last_read;
+    int register_assigned;
+  };
+  void update_live_ranges_for_read(std::size_t i, std::string const& name)
+  {
+    live_range* found_range = nullptr;
+    for (auto& lr : live_ranges) {
+      if (lr.name == name) {
+        if (found_range == nullptr ||
+            found_range->when_written_to < lr.when_written_to) {
+          found_range = &lr;
+        }
+      }
+    }
+    if (found_range == nullptr) {
+      live_range lr;
+      lr.name = name;
+      lr.when_written_to = -1;
+      lr.when_last_read = int(i);
+      live_ranges.push_back(lr);
+    } else {
+      found_range->when_last_read = int(i);
+    }
+  }
+  void compute_live_ranges()
+  {
+    for (std::size_t i = 0; i < instructions.size(); ++i) {
+      auto& op = instructions[i];
+      if (!op.left_name.empty()) {
+        update_live_ranges_for_read(i, op.left_name);
+      }
+      if (!op.right_name.empty()) {
+        update_live_ranges_for_read(i, op.right_name);
+      }
+      live_range result_live_range;
+      result_live_range.name = op.result_name;
+      result_live_range.when_written_to = int(i);
+      result_live_range.when_last_read = -2;
+      live_ranges.push_back(result_live_range);
+    }
+    std::sort(live_ranges.begin(), live_ranges.end(),
+        [] (live_range const& a, live_range const& b) {
+          return a.when_written_to < b.when_written_to;
+        });
+    assign_registers();
+  }
+  void assign_registers()
+  {
+    std::vector<live_range*> active;
+    std::vector<int> free_registers;
+    for (auto& i : live_ranges) {
+      for (std::size_t j = 0; j < active.size();) {
+        if (active[j]->when_last_read >= i.when_written_to) {
+          ++j;
+          continue;
+        }
+        free_registers.push_back(active[j]->register_assigned);
+        active.erase(active.begin() + j);
+      }
+      if (free_registers.empty()) {
+        free_registers.push_back(register_count++);
+      }
+      i.register_assigned = free_registers.back();
+      free_registers.pop_back();
+      active.insert(
+          std::upper_bound(
+            active.begin(),
+            active.end(),
+            &i,
+            [] (live_range* a, live_range* b) {
+              return a->when_last_read < b->when_last_read;
+            }),
+          &i);
+    }
+  }
   int next_temporary{0};
   std::vector<named_instruction> instructions;
+  std::vector<live_range> live_ranges;
+  int register_count{0};
 };
 
 }
