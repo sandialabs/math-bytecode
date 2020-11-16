@@ -350,5 +350,8 @@ int main() {
   auto l = rtc::build_language();
   auto rtp = parsegen::build_reader_tables(l);
   rtc::reader reader;
-  reader.read_string("field[0] = coords[0] * coords[0];", "test");
+  reader.read_string(
+      "double dist = coords[0] * coords[0] + coords[1] * coords[1] + coords[2] * coords[2];"
+      ,
+      "test");
 }
