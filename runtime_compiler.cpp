@@ -1,4 +1,7 @@
 #include "parsegen_language.hpp"
+#include "parsegen_reader.hpp"
+
+#include <iostream>
 
 namespace rtc {
 
@@ -9,7 +12,6 @@ enum token : std::size_t {
   token_minus,
   token_times,
   token_divide,
-  token_raised_to,
   token_assign,
   token_open_subexpression,
   token_close_subexpression,
@@ -35,7 +37,6 @@ enum production : std::size_t {
   production_sum_or_difference,
   production_product_or_quotient,
   production_decay_to_negation,
-  production_decay_to_exponentiation,
   production_decay_to_leaf,
   production_read,
   production_subexpression,
@@ -44,7 +45,6 @@ enum production : std::size_t {
   production_product,
   production_quotient,
   production_negation,
-  production_exponentiation,
   production_literal,
   production_count
 };
@@ -62,7 +62,6 @@ parsegen::language build_language() {
   l.tokens[token_minus] = {"minus", "\\-" + space_regex};
   l.tokens[token_times] = {"times", "\\*" + space_regex};
   l.tokens[token_divide] = {"divide", "/" + space_regex};
-  l.tokens[token_raised_to] = {"raised_to", "\\^" + space_regex};
   l.tokens[token_assign] = {"assign", "=" + space_regex};
   l.tokens[token_open_subexpression] = {"open_subexpression", "\\(" + space_regex};
   l.tokens[token_close_subexpression] = {"close_subexpression", "\\)" + space_regex};
@@ -98,10 +97,8 @@ parsegen::language build_language() {
   {"sum_or_difference", {"product_or_quotient"}};
   l.productions[production_decay_to_negation] =
   {"product_or_quotient", {"negation"}};
-  l.productions[production_decay_to_exponentiation] =
-  {"negation", {"exponentiation"}};
   l.productions[production_decay_to_leaf] =
-  {"exponentiation", {"leaf"}};
+  {"negation", {"leaf"}};
   l.productions[production_read] =
   {"leaf", {"mutable"}};
   l.productions[production_subexpression] =
@@ -115,12 +112,7 @@ parsegen::language build_language() {
   l.productions[production_quotient] =
   {"product_or_quotient", {"product_or_quotient", "divide", "negation"}};
   l.productions[production_negation] =
-  {"negation", {"minus", "exponentiation"}};
-  // purposefully don't let exponentiation recurse since
-  // people don't agree whether it is left or right associative.
-  // force parentheses to make intentions clear.
-  l.productions[production_exponentiation] =
-  {"exponentiation", {"leaf", "raised_to", "leaf"}};
+  {"negation", {"minus", "leaf"}};
   l.productions[production_literal] =
   {"leaf", {"floating_point"}};
   return l;
@@ -131,4 +123,6 @@ parsegen::language build_language() {
 int main() {
   auto l = rtc::build_language();
   auto rtp = parsegen::build_reader_tables(l);
+  parsegen::debug_reader reader(rtp, std::cout);
+  reader.read_string("field[0] = coords[0] * coords[0];", "test");
 }
