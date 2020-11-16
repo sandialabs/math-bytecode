@@ -1,7 +1,11 @@
+#include "runtime_compiler.hpp"
+
 #include "parsegen_language.hpp"
 #include "parsegen_reader.hpp"
 
-#include <iostream>
+#include <algorithm>
+
+#include <iostream> //debug
 
 namespace rtc {
 
@@ -133,17 +137,6 @@ static inline std::string remove_trailing_space(std::string s) {
   return s;
 }
 
-enum class instruction_code : std::int16_t {
-  copy,
-  add,
-  subtract,
-  multiply,
-  divide,
-  negate,
-  assign_constant,
-  sqrt,
-};
-
 class named_instruction {
  public:
   instruction_code code;
@@ -151,19 +144,6 @@ class named_instruction {
   std::string left_name;
   std::string right_name;
   double constant;
-};
-
-class instruction {
- public:
-  std::int16_t result_register;
-  instruction_code code;
-  union {
-    struct {
-      std::int32_t left;
-      std::int32_t right;
-    } input_registers;
-    double constant;
-  };
 };
 
 std::ostream& operator<<(
