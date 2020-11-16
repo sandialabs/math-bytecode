@@ -127,3 +127,8 @@ parsegen::language build_language() {
 }
 
 }
+
+int main() {
+  auto l = rtc::build_language();
+  auto rtp = parsegen::build_reader_tables(l);
+}

@@ -4,7 +4,7 @@ project(RTC VERSION 0.1.0 LANGUAGES CXX)
 
 find_package(ParseGen REQUIRED)
 
-add_library(runtime_compiler
+add_executable(runtime_compiler
   runtime_compiler.cpp
   )
 
