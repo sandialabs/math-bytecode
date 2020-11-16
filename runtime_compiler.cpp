@@ -399,7 +399,7 @@ class reader : public parsegen::reader
     std::vector<int> free_registers;
     for (auto& i : live_ranges) {
       for (std::size_t j = 0; j < active.size();) {
-        if (active[j]->when_last_read >= i.when_written_to) {
+        if (active[j]->when_last_read > i.when_written_to) {
           ++j;
           continue;
         }
