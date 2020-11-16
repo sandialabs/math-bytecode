@@ -133,7 +133,7 @@ static inline std::string remove_trailing_space(std::string s) {
   return s;
 }
 
-enum class instruction_code {
+enum class instruction_code : std::int16_t {
   copy,
   add,
   subtract,
@@ -151,6 +151,19 @@ class named_instruction {
   std::string left_name;
   std::string right_name;
   double constant;
+};
+
+class instruction {
+ public:
+  std::int16_t result_register;
+  instruction_code code;
+  union {
+    struct {
+      std::int32_t left;
+      std::int32_t right;
+    } input_registers;
+    double constant;
+  };
 };
 
 std::ostream& operator<<(
@@ -235,8 +248,8 @@ class reader : public parsegen::reader
     switch (production) {
       case production_program:
       {
-        for (std::size_t i = 0; i < instructions.size(); ++i) {
-          std::cout << i << ": " << instructions[i];
+        for (std::size_t i = 0; i < named_instructions.size(); ++i) {
+          std::cout << i << ": " << named_instructions[i];
         }
         compute_live_ranges();
         for (auto& lr : live_ranges) {
@@ -251,7 +264,7 @@ class reader : public parsegen::reader
         op.code = instruction_code::copy;
         op.result_name = std::any_cast<std::string&&>(std::move(rhs.at(0)));
         op.left_name = std::any_cast<std::string&&>(std::move(rhs.at(2)));
-        instructions.push_back(op);
+        named_instructions.push_back(op);
         break;
       }
       case production_declare_assign:
@@ -260,7 +273,7 @@ class reader : public parsegen::reader
         op.code = instruction_code::copy;
         op.result_name = std::any_cast<std::string&&>(std::move(rhs.at(1)));
         op.left_name = std::any_cast<std::string&&>(std::move(rhs.at(3)));
-        instructions.push_back(op);
+        named_instructions.push_back(op);
         break;
       }
       case production_variable:
@@ -303,7 +316,7 @@ class reader : public parsegen::reader
         op.left_name =
           std::any_cast<std::string&&>(
               std::move(rhs.at(2)));
-        instructions.push_back(op);
+        named_instructions.push_back(op);
         return result;
       }
       case production_sum:
@@ -314,7 +327,7 @@ class reader : public parsegen::reader
         op.result_name = result;
         op.left_name = std::any_cast<std::string&&>(std::move(rhs.at(0)));
         op.right_name = std::any_cast<std::string&&>(std::move(rhs.at(2)));
-        instructions.push_back(op);
+        named_instructions.push_back(op);
         return result;
       }
       case production_difference:
@@ -325,7 +338,7 @@ class reader : public parsegen::reader
         op.result_name = result;
         op.left_name = std::any_cast<std::string&&>(std::move(rhs.at(0)));
         op.right_name = std::any_cast<std::string&&>(std::move(rhs.at(2)));
-        instructions.push_back(op);
+        named_instructions.push_back(op);
         return result;
       }
       case production_product:
@@ -336,7 +349,7 @@ class reader : public parsegen::reader
         op.result_name = result;
         op.left_name = std::any_cast<std::string&&>(std::move(rhs.at(0)));
         op.right_name = std::any_cast<std::string&&>(std::move(rhs.at(2)));
-        instructions.push_back(op);
+        named_instructions.push_back(op);
         return result;
       }
       case production_quotient:
@@ -347,7 +360,7 @@ class reader : public parsegen::reader
         op.result_name = result;
         op.left_name = std::any_cast<std::string&&>(std::move(rhs.at(0)));
         op.right_name = std::any_cast<std::string&&>(std::move(rhs.at(2)));
-        instructions.push_back(op);
+        named_instructions.push_back(op);
         return result;
       }
       case production_negation:
@@ -357,7 +370,7 @@ class reader : public parsegen::reader
         op.code = instruction_code::negate;
         op.result_name = result;
         op.left_name = std::any_cast<std::string&&>(std::move(rhs.at(1)));
-        instructions.push_back(op);
+        named_instructions.push_back(op);
         return result;
       }
       case production_literal:
@@ -367,7 +380,7 @@ class reader : public parsegen::reader
         op.code = instruction_code::assign_constant;
         op.result_name = result;
         op.constant = std::any_cast<double>(rhs.at(0));
-        instructions.push_back(op);
+        named_instructions.push_back(op);
         return result;
       }
     }
@@ -407,8 +420,8 @@ class reader : public parsegen::reader
   }
   void compute_live_ranges()
   {
-    for (std::size_t i = 0; i < instructions.size(); ++i) {
-      auto& op = instructions[i];
+    for (std::size_t i = 0; i < named_instructions.size(); ++i) {
+      auto& op = named_instructions[i];
       if (!op.left_name.empty()) {
         update_live_ranges_for_read(i, op.left_name);
       }
@@ -457,7 +470,7 @@ class reader : public parsegen::reader
     }
   }
   int next_temporary{0};
-  std::vector<named_instruction> instructions;
+  std::vector<named_instruction> named_instructions;
   std::vector<live_range> live_ranges;
   int register_count{0};
 };
