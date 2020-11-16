@@ -118,6 +118,37 @@ parsegen::language build_language() {
   return l;
 }
 
+static inline std::string remove_trailing_space(std::string s) {
+  s.erase(std::find_if(s.rbegin(), s.rend(), [](char ch) {
+    return !std::isspace(ch);
+  }).base(), s.end());
+  return s;
+}
+
+class reader : public parsegen::reader
+{
+ public:
+  reader():
+    parsegen::reader(
+        parsegen::build_reader_tables(
+          rtc::build_language()))
+  {
+  }
+  virtual std::any at_shift(int token, std::string& text) override
+  {
+    switch (token) {
+      case token_identifier: return remove_trailing_space(std::move(text));
+      case token_integer: return std::stoi(text);
+      case token_floating_point: return std::stod(text);
+    }
+    return std::any();
+  }
+  virtual std::any at_reduce(
+      int prod, std::vector<std::any>& rhs) override
+  {
+  }
+};
+
 }
 
 int main() {
