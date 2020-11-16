@@ -125,6 +125,78 @@ static inline std::string remove_trailing_space(std::string s) {
   return s;
 }
 
+enum class instruction_code {
+  copy,
+  add,
+  subtract,
+  multiply,
+  divide,
+  negate,
+  assign_constant,
+};
+
+class named_instruction {
+ public:
+  instruction_code code;
+  std::string result_name;
+  std::string left_name;
+  std::string right_name;
+  double constant;
+};
+
+std::ostream& operator<<(
+    std::ostream& s, named_instruction const& op)
+{
+  switch (op.code) {
+    case instruction_code::copy:
+    {
+      s << op.result_name << " = " << op.left_name << '\n';
+      break;
+    }
+    case instruction_code::add:
+    {
+      s << op.result_name << " = "
+        << op.left_name << " + "
+        << op.right_name << '\n';
+      break;
+    }
+    case instruction_code::subtract:
+    {
+      s << op.result_name << " = "
+        << op.left_name << " - "
+        << op.right_name << '\n';
+      break;
+    }
+    case instruction_code::multiply:
+    {
+      s << op.result_name << " = "
+        << op.left_name << " * "
+        << op.right_name << '\n';
+      break;
+    }
+    case instruction_code::divide:
+    {
+      s << op.result_name << " = "
+        << op.left_name << " / "
+        << op.right_name << '\n';
+      break;
+    }
+    case instruction_code::negate:
+    {
+      s << op.result_name << " = -"
+        << op.left_name << '\n';
+      break;
+    }
+    case instruction_code::assign_constant:
+    {
+      s << op.result_name << " = "
+        << op.constant << '\n';
+      break;
+    }
+  }
+  return s;
+}
+
 class reader : public parsegen::reader
 {
  public:
@@ -144,9 +216,131 @@ class reader : public parsegen::reader
     return std::any();
   }
   virtual std::any at_reduce(
-      int prod, std::vector<std::any>& rhs) override
+      int production, std::vector<std::any>& rhs) override
   {
+    switch (production) {
+      case production_program:
+      {
+        for (auto& op : instructions)
+        {
+          std::cout << op;
+        }
+      }
+      case production_assign:
+      {
+        named_instruction op;
+        op.code = instruction_code::copy;
+        op.result_name = std::any_cast<std::string&&>(std::move(rhs.at(0)));
+        op.left_name = std::any_cast<std::string&&>(std::move(rhs.at(2)));
+        instructions.push_back(op);
+        break;
+      }
+      case production_declare_assign:
+      {
+        named_instruction op;
+        op.code = instruction_code::copy;
+        op.result_name = std::any_cast<std::string&&>(std::move(rhs.at(1)));
+        op.left_name = std::any_cast<std::string&&>(std::move(rhs.at(3)));
+        instructions.push_back(op);
+        break;
+      }
+      case production_variable:
+      {
+        return std::move(rhs.at(0));
+      }
+      case production_array_entry:
+      {
+        auto array_name = std::any_cast<std::string&&>(std::move(rhs.at(0)));
+        auto index = std::any_cast<int>(rhs.at(2));
+        auto entry_name = array_name + "[" + std::to_string(index) + "]";
+        return entry_name;
+      }
+      case production_sum_or_difference:
+      case production_product_or_quotient:
+      case production_decay_to_negation:
+      case production_decay_to_leaf:
+      case production_read:
+      {
+        return std::move(rhs.at(0));
+      }
+      case production_subexpression:
+      {
+        return std::move(rhs.at(1));
+      }
+      case production_sum:
+      {
+        auto result = get_temporary();
+        named_instruction op;
+        op.code = instruction_code::add;
+        op.result_name = result;
+        op.left_name = std::any_cast<std::string&&>(std::move(rhs.at(0)));
+        op.right_name = std::any_cast<std::string&&>(std::move(rhs.at(2)));
+        instructions.push_back(op);
+        return result;
+      }
+      case production_difference:
+      {
+        auto result = get_temporary();
+        named_instruction op;
+        op.code = instruction_code::subtract;
+        op.result_name = result;
+        op.left_name = std::any_cast<std::string&&>(std::move(rhs.at(0)));
+        op.right_name = std::any_cast<std::string&&>(std::move(rhs.at(2)));
+        instructions.push_back(op);
+        return result;
+      }
+      case production_product:
+      {
+        auto result = get_temporary();
+        named_instruction op;
+        op.code = instruction_code::multiply;
+        op.result_name = result;
+        op.left_name = std::any_cast<std::string&&>(std::move(rhs.at(0)));
+        op.right_name = std::any_cast<std::string&&>(std::move(rhs.at(2)));
+        instructions.push_back(op);
+        return result;
+      }
+      case production_quotient:
+      {
+        auto result = get_temporary();
+        named_instruction op;
+        op.code = instruction_code::divide;
+        op.result_name = result;
+        op.left_name = std::any_cast<std::string&&>(std::move(rhs.at(0)));
+        op.right_name = std::any_cast<std::string&&>(std::move(rhs.at(2)));
+        instructions.push_back(op);
+        return result;
+      }
+      case production_negation:
+      {
+        auto result = get_temporary();
+        named_instruction op;
+        op.code = instruction_code::negate;
+        op.result_name = result;
+        op.left_name = std::any_cast<std::string&&>(std::move(rhs.at(1)));
+        instructions.push_back(op);
+        return result;
+      }
+      case production_literal:
+      {
+        auto result = get_temporary();
+        named_instruction op;
+        op.code = instruction_code::assign_constant;
+        op.result_name = result;
+        op.constant = std::any_cast<double>(rhs.at(0));
+        instructions.push_back(op);
+        return result;
+      }
+    }
+    return std::any();
   }
+  std::string get_temporary()
+  {
+    return std::string("tmp") + std::to_string(++next_temporary);
+  }
+ private:
+  int next_temporary{0};
+  std::vector<named_instruction> instructions;
 };
 
 }
