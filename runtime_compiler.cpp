@@ -469,7 +469,7 @@ int main() {
   auto rtp = parsegen::build_reader_tables(l);
   rtc::reader reader;
   reader.read_string(
-      "double dist = coords[0] * coords[0] + coords[1] * coords[1] + coords[2] * coords[2];"
+      "double dist = sqrt(coords[0] * coords[0] + coords[1] * coords[1] + coords[2] * coords[2]);"
       ,
       "test");
 }
