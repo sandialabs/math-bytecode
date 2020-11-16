@@ -225,6 +225,7 @@ class reader : public parsegen::reader
         {
           std::cout << op;
         }
+        break;
       }
       case production_assign:
       {
@@ -348,6 +349,6 @@ class reader : public parsegen::reader
 int main() {
   auto l = rtc::build_language();
   auto rtp = parsegen::build_reader_tables(l);
-  parsegen::debug_reader reader(rtp, std::cout);
+  rtc::reader reader;
   reader.read_string("field[0] = coords[0] * coords[0];", "test");
 }
