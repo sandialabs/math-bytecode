@@ -539,6 +539,14 @@ class reader : public parsegen::reader
     }
     return std::any();
   }
+  program get_program()
+  {
+    return program(
+        std::move(instructions),
+        std::move(input_registers),
+        std::move(output_registers),
+        register_count);
+  }
  private:
   std::string get_temporary()
   {
@@ -679,14 +687,6 @@ class reader : public parsegen::reader
       output_registers[output_name] = get_output_register(output_name);
     }
   }
-  program get_program()
-  {
-    return program(
-        std::move(instructions),
-        std::move(input_registers),
-        std::move(output_registers),
-        register_count);
-  }
   int next_temporary{0};
   std::vector<named_instruction> named_instructions;
   std::vector<instruction> instructions;
@@ -698,20 +698,28 @@ class reader : public parsegen::reader
   std::map<std::string, int> output_registers;
 };
 
+program compile(
+    std::string const& program,
+    std::vector<std::string> const& input_variables,
+    std::vector<std::string> const& output_variables,
+    std::string const& program_name)
+{
+  rtc::reader reader(input_variables, output_variables);
+  reader.read_string(
+    rtc::remove_leading_space(program),
+    program_name);
+  return reader.get_program();
+}
+
 }
 
 int main() {
-  auto l = rtc::build_language();
-  auto rtp = parsegen::build_reader_tables(l);
-  rtc::reader reader(
-      {"DISK_R", "DISK_X", "DISK_Y", "coord[0]", "coord[1]", "coord[2]"},
-      {"field[0]"});
-  reader.read_string(
-    rtc::remove_leading_space(
+  auto p = rtc::compile(
     "\n"
 "      double radius_factor = DISK_R/10.0;\n"
 "      field[0] = 20*exp(-( (coord[0]-DISK_X)^2 + (coord[1]-DISK_Y)^2 )/radius_factor);\n"
-"    ")
-      ,
+"    ",
+      {"DISK_R", "DISK_X", "DISK_Y", "coord[0]", "coord[1]", "coord[2]"},
+      {"field[0]"},
       "test");
 }

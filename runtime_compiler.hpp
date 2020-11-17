@@ -126,7 +126,7 @@ class program_view {
       int instruction_count_in)
   {
   }
-  inline void execute(double* registers)
+  inline void execute(double* registers) const
   {
     for (int i = 0; i < instruction_count; ++i) {
       instructions[i].execute(registers);
@@ -168,5 +168,12 @@ class program {
   std::map<std::string, int> m_output_registers;
   int m_register_count;
 };
+
+[[nodiscard]]
+program compile(
+    std::string const& program,
+    std::vector<std::string> const& input_variables,
+    std::vector<std::string> const& output_variables = {},
+    std::string const& program_name = "runtime compiler input");
 
 }
