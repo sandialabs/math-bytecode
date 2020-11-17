@@ -16,6 +16,7 @@ enum token : std::size_t {
   token_minus,
   token_times,
   token_divide,
+  token_raise,
   token_assign,
   token_open_subexpression,
   token_close_subexpression,
@@ -42,6 +43,7 @@ enum production : std::size_t {
   production_sum_or_difference,
   production_product_or_quotient,
   production_decay_to_negation,
+  production_decay_to_exponentiation,
   production_decay_to_leaf,
   production_read,
   production_subexpression,
@@ -52,6 +54,7 @@ enum production : std::size_t {
   production_product,
   production_quotient,
   production_negation,
+  production_exponentiation,
   production_literal,
   production_count
 };
@@ -69,6 +72,7 @@ parsegen::language build_language() {
   l.tokens[token_minus] = {"minus", "\\-" + space_regex};
   l.tokens[token_times] = {"times", "\\*" + space_regex};
   l.tokens[token_divide] = {"divide", "/" + space_regex};
+  l.tokens[token_raise] = {"raise", "\\^" + space_regex};
   l.tokens[token_assign] = {"assign", "=" + space_regex};
   l.tokens[token_open_subexpression] = {"open_subexpression", "\\(" + space_regex};
   l.tokens[token_close_subexpression] = {"close_subexpression", "\\)" + space_regex};
@@ -105,8 +109,10 @@ parsegen::language build_language() {
   {"sum_or_difference", {"product_or_quotient"}};
   l.productions[production_decay_to_negation] =
   {"product_or_quotient", {"negation"}};
+  l.productions[production_decay_to_exponentiation] =
+  {"negation", {"exponentiation"}};
   l.productions[production_decay_to_leaf] =
-  {"negation", {"leaf"}};
+  {"exponentiation", {"leaf"}};
   l.productions[production_read] =
   {"leaf", {"mutable"}};
   l.productions[production_subexpression] =
@@ -124,7 +130,11 @@ parsegen::language build_language() {
   l.productions[production_quotient] =
   {"product_or_quotient", {"product_or_quotient", "divide", "negation"}};
   l.productions[production_negation] =
-  {"negation", {"minus", "leaf"}};
+  {"negation", {"minus", "exponentiation"}};
+  // deliberately do not allow recursion on exponentiation since the rest
+  // of the world doesn't agree on whether it is left or right associative
+  l.productions[production_exponentiation] =
+  {"exponentiation", {"leaf", "raise", "leaf"}};
   l.productions[production_literal] =
   {"leaf", {"floating_point"}};
   return l;
@@ -370,6 +380,7 @@ class reader : public parsegen::reader
       case production_sum_or_difference:
       case production_product_or_quotient:
       case production_decay_to_negation:
+      case production_decay_to_exponentiation:
       case production_decay_to_leaf:
       case production_read:
       {
@@ -390,6 +401,10 @@ class reader : public parsegen::reader
         op.result_name = result;
         if (function_name == "sqrt") {
           op.code = instruction_code::sqrt;
+        } else if (function_name == "sin") {
+          op.code = instruction_code::sin;
+        } else if (function_name == "cos") {
+          op.code = instruction_code::cos;
         } else {
           throw parsegen::parse_error("unknown function name");
         }
@@ -450,6 +465,17 @@ class reader : public parsegen::reader
         op.code = instruction_code::negate;
         op.result_name = result;
         op.left_name = std::any_cast<std::string&&>(std::move(rhs.at(1)));
+        named_instructions.push_back(op);
+        return result;
+      }
+      case production_exponentiation:
+      {
+        auto result = get_temporary();
+        named_instruction op;
+        op.code = instruction_code::pow;
+        op.result_name = result;
+        op.left_name = std::any_cast<std::string&&>(std::move(rhs.at(0)));
+        op.right_name = std::any_cast<std::string&&>(std::move(rhs.at(2)));
         named_instructions.push_back(op);
         return result;
       }
