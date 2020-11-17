@@ -16,6 +16,7 @@ enum class instruction_code : std::int32_t {
   sqrt,
   sin,
   cos,
+  exp,
   pow,
 };
 
@@ -95,6 +96,12 @@ inline void execute(instruction const& op, double* registers) {
     {
       registers[op.result_register] =
         std::cos(registers[op.input_registers.left]);
+      break;
+    }
+    case instruction_code::exp:
+    {
+      registers[op.result_register] =
+        std::exp(registers[op.input_registers.left]);
       break;
     }
     case instruction_code::pow:

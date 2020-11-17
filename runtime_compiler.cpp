@@ -55,7 +55,8 @@ enum production : std::size_t {
   production_quotient,
   production_negation,
   production_exponentiation,
-  production_literal,
+  production_floating_point_literal,
+  production_integer_literal,
   production_count
 };
 
@@ -135,13 +136,22 @@ parsegen::language build_language() {
   // of the world doesn't agree on whether it is left or right associative
   l.productions[production_exponentiation] =
   {"exponentiation", {"leaf", "raise", "leaf"}};
-  l.productions[production_literal] =
+  l.productions[production_floating_point_literal] =
   {"leaf", {"floating_point"}};
+  l.productions[production_integer_literal] =
+  {"leaf", {"integer"}};
   return l;
 }
 
+static inline std::string remove_leading_space(std::string s) {
+  s.erase(s.begin(), std::find_if(s.begin(), s.end(), [] (char ch) {
+    return !std::isspace(ch);
+  }));
+  return s;
+}
+
 static inline std::string remove_trailing_space(std::string s) {
-  s.erase(std::find_if(s.rbegin(), s.rend(), [](char ch) {
+  s.erase(std::find_if(s.rbegin(), s.rend(), [] (char ch) {
     return !std::isspace(ch);
   }).base(), s.end());
   return s;
@@ -223,10 +233,17 @@ std::ostream& operator<<(
         << op.left_name << ")\n";
       break;
     }
+    case instruction_code::exp:
+    {
+      s << op.result_name << " = exp("
+        << op.left_name << ")\n";
+      break;
+    }
     case instruction_code::pow:
     {
       s << op.result_name << " = pow("
-        << op.left_name << ")\n";
+        << op.left_name << ", "
+        << op.right_name << ")\n";
       break;
     }
   }
@@ -300,10 +317,17 @@ std::ostream& operator<<(
         << op.input_registers.left << ")\n";
       break;
     }
+    case instruction_code::exp:
+    {
+      s << "$" << op.result_register << " = exp($"
+        << op.input_registers.left << ")\n";
+      break;
+    }
     case instruction_code::pow:
     {
       s << "$" << op.result_register << " = pow($"
-        << op.input_registers.left << ")\n";
+        << op.input_registers.left << ", $"
+        << op.input_registers.right << ")\n";
       break;
     }
   }
@@ -405,6 +429,8 @@ class reader : public parsegen::reader
           op.code = instruction_code::sin;
         } else if (function_name == "cos") {
           op.code = instruction_code::cos;
+        } else if (function_name == "exp") {
+          op.code = instruction_code::exp;
         } else {
           throw parsegen::parse_error("unknown function name");
         }
@@ -479,13 +505,23 @@ class reader : public parsegen::reader
         named_instructions.push_back(op);
         return result;
       }
-      case production_literal:
+      case production_floating_point_literal:
       {
         auto result = get_temporary();
         named_instruction op;
         op.code = instruction_code::assign_constant;
         op.result_name = result;
         op.constant = std::any_cast<double>(rhs.at(0));
+        named_instructions.push_back(op);
+        return result;
+      }
+      case production_integer_literal:
+      {
+        auto result = get_temporary();
+        named_instruction op;
+        op.code = instruction_code::assign_constant;
+        op.result_name = result;
+        op.constant = double(std::any_cast<int>(rhs.at(0)));
         named_instructions.push_back(op);
         return result;
       }
@@ -614,7 +650,11 @@ int main() {
   auto rtp = parsegen::build_reader_tables(l);
   rtc::reader reader;
   reader.read_string(
-      "double dist = sqrt(coords[0] * coords[0] + coords[1] * coords[1] + coords[2] * coords[2]);"
+    rtc::remove_leading_space(
+    "\n"
+"      double radius_factor = DISK_R/10.0;\n"
+"      field[0] = 20*exp(-( (coord[0]-DISK_X)^2 + (coord[1]-DISK_Y)^2 )/radius_factor);\n"
+"    ")
       ,
       "test");
 }
