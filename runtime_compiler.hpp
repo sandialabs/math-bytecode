@@ -149,15 +149,19 @@ class program {
     ,m_output_registers(output_registers_in)
     ,m_register_count(register_count_in)
   {}
+  [[nodiscard]]
   int register_count() const { return m_register_count; }
+  [[nodiscard]]
   int input_register(std::string const& name) const
   {
     return m_input_registers.at(name);
   }
+  [[nodiscard]]
   int output_register(std::string const& name) const
   {
     return m_output_registers.at(name);
   }
+  [[nodiscard]]
   program_view view() const
   {
     return program_view(m_instructions.data(), int(m_instructions.size()));
