@@ -636,6 +636,29 @@ class reader : public parsegen::reader
       }
     }
   }
+  int get_input_register(std::string const& name) const
+  {
+    for (auto& lr : live_ranges) {
+      if (lr.name == name && lr.when_written_to == -1) {
+        return lr.register_assigned;
+      }
+    }
+    return -1;
+  }
+  int get_output_register(std::string const& name) const
+  {
+    live_range const* found_range = nullptr;
+    for (auto& lr : live_ranges) {
+      if (lr.name == name) {
+        if (found_range == nullptr ||
+            lr.when_written_to > found_range->when_written_to) {
+          found_range = &lr;
+        }
+      }
+    }
+    if (found_range) return found_range->register_assigned;
+    return -1;
+  }
   int next_temporary{0};
   std::vector<named_instruction> named_instructions;
   std::vector<instruction> instructions;
