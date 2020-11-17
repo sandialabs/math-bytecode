@@ -337,10 +337,14 @@ std::ostream& operator<<(
 class reader : public parsegen::reader
 {
  public:
-  reader():
-    parsegen::reader(
+  reader(
+      std::vector<std::string> const& input_variable_names_in,
+      std::vector<std::string> const& output_variable_names_in)
+    :parsegen::reader(
         parsegen::build_reader_tables(
           rtc::build_language()))
+    ,input_variable_names(input_variable_names_in)
+    ,output_variable_names(output_variable_names_in)
   {
   }
   virtual std::any at_shift(int token, std::string& text) override
@@ -369,6 +373,13 @@ class reader : public parsegen::reader
         generate_instructions();
         for (std::size_t i = 0; i < instructions.size(); ++i) {
           std::cout << i << ": " << instructions[i];
+        }
+        lookup_registers();
+        for (auto& pair : input_registers) {
+          std::cout << "input variable " << pair.first << " at register " << pair.second << '\n';
+        }
+        for (auto& pair : output_registers) {
+          std::cout << "output variable " << pair.first << " at register " << pair.second << '\n';
         }
         break;
       }
@@ -659,11 +670,32 @@ class reader : public parsegen::reader
     if (found_range) return found_range->register_assigned;
     return -1;
   }
+  void lookup_registers()
+  {
+    for (auto& input_name : input_variable_names) {
+      input_registers[input_name] = get_input_register(input_name);
+    }
+    for (auto& output_name : output_variable_names) {
+      output_registers[output_name] = get_output_register(output_name);
+    }
+  }
+  program get_program()
+  {
+    return program(
+        std::move(instructions),
+        std::move(input_registers),
+        std::move(output_registers),
+        register_count);
+  }
   int next_temporary{0};
   std::vector<named_instruction> named_instructions;
   std::vector<instruction> instructions;
   std::vector<live_range> live_ranges;
   int register_count{0};
+  std::vector<std::string> input_variable_names;
+  std::vector<std::string> output_variable_names;
+  std::map<std::string, int> input_registers;
+  std::map<std::string, int> output_registers;
 };
 
 }
@@ -671,7 +703,9 @@ class reader : public parsegen::reader
 int main() {
   auto l = rtc::build_language();
   auto rtp = parsegen::build_reader_tables(l);
-  rtc::reader reader;
+  rtc::reader reader(
+      {"DISK_R", "DISK_X", "DISK_Y", "coord[0]", "coord[1]", "coord[2]"},
+      {"field[0]"});
   reader.read_string(
     rtc::remove_leading_space(
     "\n"
