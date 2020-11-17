@@ -14,6 +14,9 @@ enum class instruction_code : std::int32_t {
   negate,
   assign_constant,
   sqrt,
+  sin,
+  cos,
+  pow,
 };
 
 class instruction {
@@ -82,7 +85,40 @@ inline void execute(instruction const& op, double* registers) {
         std::sqrt(registers[op.input_registers.left]);
       break;
     }
+    case instruction_code::sin:
+    {
+      registers[op.result_register] =
+        std::sin(registers[op.input_registers.left]);
+      break;
+    }
+    case instruction_code::cos:
+    {
+      registers[op.result_register] =
+        std::cos(registers[op.input_registers.left]);
+      break;
+    }
+    case instruction_code::pow:
+    {
+      registers[op.result_register] =
+        std::pow(
+            registers[op.input_registers.left],
+            registers[op.input_registers.right]);
+      break;
+    }
   }
 }
+
+class program_view {
+ public:
+  inline void execute(double* registers)
+  {
+    for (int i = 0; i < instruction_count; ++i) {
+      rtc::execute(instructions[i], registers);
+    }
+  }
+ private:
+  instruction const* instructions;
+  int instruction_count;
+};
 
 }

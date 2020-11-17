@@ -199,6 +199,25 @@ std::ostream& operator<<(
     {
       s << op.result_name << " = sqrt("
         << op.left_name << ")\n";
+      break;
+    }
+    case instruction_code::sin:
+    {
+      s << op.result_name << " = sin("
+        << op.left_name << ")\n";
+      break;
+    }
+    case instruction_code::cos:
+    {
+      s << op.result_name << " = cos("
+        << op.left_name << ")\n";
+      break;
+    }
+    case instruction_code::pow:
+    {
+      s << op.result_name << " = pow("
+        << op.left_name << ")\n";
+      break;
     }
   }
   return s;
@@ -257,6 +276,25 @@ std::ostream& operator<<(
     {
       s << "$" << op.result_register << " = sqrt($"
         << op.input_registers.left << ")\n";
+      break;
+    }
+    case instruction_code::sin:
+    {
+      s << "$" << op.result_register << " = sin($"
+        << op.input_registers.left << ")\n";
+      break;
+    }
+    case instruction_code::cos:
+    {
+      s << "$" << op.result_register << " = cos($"
+        << op.input_registers.left << ")\n";
+      break;
+    }
+    case instruction_code::pow:
+    {
+      s << "$" << op.result_register << " = pow($"
+        << op.input_registers.left << ")\n";
+      break;
     }
   }
   return s;
