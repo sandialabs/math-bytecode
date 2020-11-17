@@ -699,14 +699,14 @@ class reader : public parsegen::reader
 };
 
 program compile(
-    std::string const& program,
+    std::string const& source_code,
     std::vector<std::string> const& input_variables,
     std::vector<std::string> const& output_variables,
     std::string const& program_name)
 {
   rtc::reader reader(input_variables, output_variables);
   reader.read_string(
-    rtc::remove_leading_space(program),
+    rtc::remove_leading_space(source_code),
     program_name);
   return reader.get_program();
 }

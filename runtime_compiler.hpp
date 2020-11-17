@@ -175,7 +175,7 @@ class program {
 
 [[nodiscard]]
 program compile(
-    std::string const& program,
+    std::string const& source_code,
     std::vector<std::string> const& input_variables,
     std::vector<std::string> const& output_variables = {},
     std::string const& program_name = "runtime compiler input");
