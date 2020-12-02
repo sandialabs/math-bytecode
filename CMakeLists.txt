@@ -52,6 +52,6 @@ configure_file(RTCConfigVersion.cmake.in
 install(FILES
   "${PROJECT_BINARY_DIR}/RTCConfig.cmake"
   "${PROJECT_BINARY_DIR}/RTCConfigVersion.cmake"
-  DESTINATION "${INSTALL_CMAKE_DIR}" COMPONENT dev)
+  DESTINATION "${INSTALL_CMAKE_DIR}")
 install(EXPORT RTCTargets
   DESTINATION "${INSTALL_CMAKE_DIR}")
