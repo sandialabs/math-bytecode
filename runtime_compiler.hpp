@@ -6,6 +6,8 @@
 #include <string>
 #include <vector>
 
+#include "p3a_macros.hpp"
+
 namespace rtc {
 
 enum class instruction_code : std::int32_t {
@@ -34,9 +36,11 @@ class instruction {
     } input_registers;
     double constant;
   };
+  P3A_HOST P3A_DEVICE P3A_ALWAYS_INLINE
   inline void execute(double* registers) const;
 };
 
+P3A_HOST P3A_DEVICE P3A_ALWAYS_INLINE
 inline void instruction::execute(double* registers) const {
   switch (this->code) {
     case instruction_code::copy:
@@ -126,6 +130,7 @@ class program_view {
       int instruction_count_in)
   {
   }
+  P3A_HOST P3A_DEVICE P3A_ALWAYS_INLINE
   inline void execute(double* registers) const
   {
     for (int i = 0; i < instruction_count; ++i) {

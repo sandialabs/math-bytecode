@@ -4,6 +4,16 @@ project(RTC VERSION 0.1.0 LANGUAGES CXX)
 
 option(RTC_ENABLE_CUDA "Build GPU version with CUDA" OFF)
 
+if(WIN32 AND NOT CYGWIN)
+  set(INSTALL_CMAKE_DIR CMake)
+  set(INSTALL_BIN_DIR ".")
+  set(INSTALL_LIB_DIR ".")
+else()
+  set(INSTALL_CMAKE_DIR lib/cmake/${PROJECT_NAME})
+  set(INSTALL_BIN_DIR "bin")
+  set(INSTALL_LIB_DIR "lib")
+endif()
+
 if (RTC_ENABLE_CUDA)
   enable_language(CUDA)
 endif()
