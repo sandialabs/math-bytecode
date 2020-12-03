@@ -443,11 +443,34 @@ class reader : public parsegen::reader
         } else if (function_name == "exp") {
           op.code = instruction_code::exp;
         } else {
-          throw parsegen::parse_error("unknown function name");
+          throw parsegen::parse_error("unknown unary function name");
         }
         op.left_name =
           std::any_cast<std::string&&>(
               std::move(rhs.at(2)));
+        named_instructions.push_back(op);
+        return result;
+      }
+      case production_binary_call:
+      {
+        auto result = get_temporary();
+        auto function_name =
+          remove_trailing_space(
+              std::any_cast<std::string&&>(
+                std::move(rhs.at(0))));
+        named_instruction op;
+        op.result_name = result;
+        if (function_name == "pow") {
+          op.code = instruction_code::pow;
+        } else {
+          throw parsegen::parse_error("unknown binary function name");
+        }
+        op.left_name =
+          std::any_cast<std::string&&>(
+              std::move(rhs.at(2)));
+        op.right_name =
+          std::any_cast<std::string&&>(
+              std::move(rhs.at(4)));
         named_instructions.push_back(op);
         return result;
       }
