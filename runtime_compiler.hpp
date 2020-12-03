@@ -128,6 +128,8 @@ class program_view {
   program_view(
       instruction const* instructions_in,
       int instruction_count_in)
+    :instructions(instructions_in)
+    ,instruction_count(instruction_count_in)
   {
   }
   P3A_HOST P3A_DEVICE P3A_ALWAYS_INLINE
