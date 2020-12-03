@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "p3a_macros.hpp"
+#include "p3a_dynamic_array.hpp"
 
 namespace rtc {
 
@@ -147,15 +148,25 @@ class program_view {
 class program {
  public:
   program(
-      std::vector<instruction>&& instructions_in,
+      std::vector<instruction> const& instructions_in,
       std::map<std::string, int>&& input_registers_in,
       std::map<std::string, int>&& output_registers_in,
       int register_count_in)
-    :m_instructions(instructions_in)
-    ,m_input_registers(input_registers_in)
+    :m_input_registers(input_registers_in)
     ,m_output_registers(output_registers_in)
     ,m_register_count(register_count_in)
-  {}
+  {
+    m_host_instructions.resize(instructions_in.size());
+    p3a::copy(p3a::serial,
+        instructions_in.cbegin(),
+        instructions_in.cend(),
+        m_host_instructions.begin());
+    m_device_instructions.resize(m_host_instructions.size());
+    p3a::copy(p3a::device,
+        m_host_instructions.cbegin(),
+        m_host_instructions.cend(),
+        m_device_instructions.begin());
+  }
   [[nodiscard]]
   int register_count() const { return m_register_count; }
   [[nodiscard]]
@@ -169,12 +180,18 @@ class program {
     return m_output_registers.at(name);
   }
   [[nodiscard]]
-  program_view view() const
+  program_view host_view() const
   {
-    return program_view(m_instructions.data(), int(m_instructions.size()));
+    return program_view(m_host_instructions.data(), int(m_host_instructions.size()));
+  }
+  [[nodiscard]]
+  program_view device_view() const
+  {
+    return program_view(m_device_instructions.data(), int(m_device_instructions.size()));
   }
  private:
-  std::vector<instruction> m_instructions;
+  p3a::host_array<instruction> m_host_instructions;
+  p3a::device_array<instruction> m_device_instructions;
   std::map<std::string, int> m_input_registers;
   std::map<std::string, int> m_output_registers;
   int m_register_count;
