@@ -648,6 +648,7 @@ class reader : public parsegen::reader
     for (auto& lr : live_ranges) {
       auto first = std::size_t(std::max(lr.when_written_to, 0));
       auto last = std::size_t(std::max(lr.when_last_read + 1, lr.when_written_to));
+      last = std::min(last, named_instructions.size());
       for (std::size_t i = first; i < last; ++i) {
         if (named_instructions[i].result_name == lr.name) {
           instructions[i].result_register = lr.register_assigned;
