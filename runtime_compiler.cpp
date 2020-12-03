@@ -673,16 +673,11 @@ class reader : public parsegen::reader
   }
   int get_output_register(std::string const& name) const
   {
-    live_range const* found_range = nullptr;
     for (auto& lr : live_ranges) {
-      if (lr.name == name) {
-        if (found_range == nullptr ||
-            lr.when_written_to > found_range->when_written_to) {
-          found_range = &lr;
-        }
+      if (lr.name == name && lr.when_last_read == int(instructions.size())) {
+        return lr.register_assigned;
       }
     }
-    if (found_range) return found_range->register_assigned;
     return -1;
   }
   void lookup_registers()
