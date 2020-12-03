@@ -593,6 +593,12 @@ class reader : public parsegen::reader
       result_live_range.name = op.result_name;
       result_live_range.when_written_to = int(i);
       result_live_range.when_last_read = -2;
+      for (auto& output_variable_name : output_variable_names) {
+        if (op.result_name == output_variable_name) {
+          result_live_range.when_last_read = int(named_instructions.size());
+          break;
+        }
+      }
       live_ranges.push_back(result_live_range);
     }
     std::sort(live_ranges.begin(), live_ranges.end(),
@@ -605,20 +611,44 @@ class reader : public parsegen::reader
   {
     std::vector<live_range*> active;
     std::vector<int> free_registers;
+    std::cout << "assigning registers...\n";
+    std::cout << "initial active set and free register set are empty.\n";
     for (auto& i : live_ranges) {
+      std::cout << "current live range is for \""
+        << i.name << "\" from "
+        << i.when_written_to << " to "
+        << i.when_last_read << "\n";
       for (std::size_t j = 0; j < active.size();) {
+        std::cout << "  active range for \""
+          << active[j]->name << "\" from "
+          << active[j]->when_written_to << " to "
+          << active[j]->when_last_read << " at register "
+          << active[j]->register_assigned << "\n";
         if (active[j]->when_last_read > i.when_written_to) {
+          std::cout << "  kept this range\n";
           ++j;
           continue;
         }
+        std::cout << "  deactivating this range,"
+          << " freeing register "
+          << active[j]->register_assigned
+          << "\n";
         free_registers.push_back(active[j]->register_assigned);
         active.erase(active.begin() + j);
       }
       if (free_registers.empty()) {
+        std::cout << "no free registers, creating register "
+          << register_count << "\n";
         free_registers.push_back(register_count++);
       }
       i.register_assigned = free_registers.back();
       free_registers.pop_back();
+      std::cout << "assigned \""
+        << i.name << "\" from "
+        << i.when_written_to << " to "
+        << i.when_last_read << " to register "
+        << i.register_assigned << "\n";
+      std::cout << " and added to the active set\n";
       active.insert(
           std::upper_bound(
             active.begin(),
