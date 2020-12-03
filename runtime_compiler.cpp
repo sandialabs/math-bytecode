@@ -611,44 +611,20 @@ class reader : public parsegen::reader
   {
     std::vector<live_range*> active;
     std::vector<int> free_registers;
-    std::cout << "assigning registers...\n";
-    std::cout << "initial active set and free register set are empty.\n";
     for (auto& i : live_ranges) {
-      std::cout << "current live range is for \""
-        << i.name << "\" from "
-        << i.when_written_to << " to "
-        << i.when_last_read << "\n";
       for (std::size_t j = 0; j < active.size();) {
-        std::cout << "  active range for \""
-          << active[j]->name << "\" from "
-          << active[j]->when_written_to << " to "
-          << active[j]->when_last_read << " at register "
-          << active[j]->register_assigned << "\n";
         if (active[j]->when_last_read > i.when_written_to) {
-          std::cout << "  kept this range\n";
           ++j;
           continue;
         }
-        std::cout << "  deactivating this range,"
-          << " freeing register "
-          << active[j]->register_assigned
-          << "\n";
         free_registers.push_back(active[j]->register_assigned);
         active.erase(active.begin() + j);
       }
       if (free_registers.empty()) {
-        std::cout << "no free registers, creating register "
-          << register_count << "\n";
         free_registers.push_back(register_count++);
       }
       i.register_assigned = free_registers.back();
       free_registers.pop_back();
-      std::cout << "assigned \""
-        << i.name << "\" from "
-        << i.when_written_to << " to "
-        << i.when_last_read << " to register "
-        << i.register_assigned << "\n";
-      std::cout << " and added to the active set\n";
       active.insert(
           std::upper_bound(
             active.begin(),
