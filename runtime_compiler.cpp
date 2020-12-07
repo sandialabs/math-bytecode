@@ -851,6 +851,15 @@ class reader : public parsegen::reader
       if (!op.right_name.empty()) {
         update_live_ranges_for_read(i, op.right_name);
       }
+      bool is_conditional_assign_to_existing = false;
+      if (op.code == instruction_code::conditional_copy) {
+        for (auto& lr : live_ranges) {
+          if (lr.name == op.result_name) {
+            is_conditional_assign_to_existing = true;
+          }
+        }
+      }
+      if (is_conditional_assign_to_existing) continue;
       live_range result_live_range;
       result_live_range.name = op.result_name;
       result_live_range.when_written_to = int(i);
