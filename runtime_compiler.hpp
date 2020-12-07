@@ -24,6 +24,15 @@ enum class instruction_code : std::int32_t {
   cos,
   exp,
   pow,
+  conditional_copy,
+  logical_or,
+  logical_and,
+  equal,
+  not_equal,
+  less,
+  less_or_equal,
+  greater,
+  greater_or_equal
 };
 
 class instruction {
@@ -119,6 +128,78 @@ inline void instruction::execute(double* registers) const {
         std::pow(
             registers[this->input_registers.left],
             registers[this->input_registers.right]);
+      break;
+    }
+    case instruction_code::conditional_copy:
+    {
+      if (registers[this->input_registers.left] != 0.0) {
+        registers[this->result_register] =
+          registers[this->input_registers.right];
+      }
+      break;
+    }
+    case instruction_code::logical_or:
+    {
+      registers[this->result_register] =
+        ((registers[this->input_registers.left] != 0.0) ||
+         (registers[this->input_registers.right] != 0.0))
+        ? 1.0 : 0.0;
+      break;
+    }
+    case instruction_code::logical_and:
+    {
+      registers[this->result_register] =
+        ((registers[this->input_registers.left] != 0.0) &&
+         (registers[this->input_registers.right] != 0.0))
+        ? 1.0 : 0.0;
+      break;
+    }
+    case instruction_code::equal:
+    {
+      registers[this->result_register] =
+        (registers[this->input_registers.left] ==
+         registers[this->input_registers.right])
+        ? 1.0 : 0.0;
+      break;
+    }
+    case instruction_code::not_equal:
+    {
+      registers[this->result_register] =
+        (registers[this->input_registers.left] !=
+         registers[this->input_registers.right])
+        ? 1.0 : 0.0;
+      break;
+    }
+    case instruction_code::less:
+    {
+      registers[this->result_register] =
+        (registers[this->input_registers.left] <
+         registers[this->input_registers.right])
+        ? 1.0 : 0.0;
+      break;
+    }
+    case instruction_code::less_or_equal:
+    {
+      registers[this->result_register] =
+        (registers[this->input_registers.left] <=
+         registers[this->input_registers.right])
+        ? 1.0 : 0.0;
+      break;
+    }
+    case instruction_code::greater:
+    {
+      registers[this->result_register] =
+        (registers[this->input_registers.left] >
+         registers[this->input_registers.right])
+        ? 1.0 : 0.0;
+      break;
+    }
+    case instruction_code::greater_or_equal:
+    {
+      registers[this->result_register] =
+        (registers[this->input_registers.left] >=
+         registers[this->input_registers.right])
+        ? 1.0 : 0.0;
       break;
     }
   }

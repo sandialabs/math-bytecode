@@ -315,6 +315,67 @@ std::ostream& operator<<(
         << op.right_name << ")\n";
       break;
     }
+    case instruction_code::conditional_copy:
+    {
+      s << "if (" << op.left_name << ") " << op.result_name << " = " << op.right_name << "\n";
+      break;
+    }
+    case instruction_code::logical_or:
+    {
+      s << op.result_name << " = "
+        << op.left_name << " || "
+        << op.right_name << "\n";
+      break;
+    }
+    case instruction_code::logical_and:
+    {
+      s << op.result_name << " = "
+        << op.left_name << " && "
+        << op.right_name << "\n";
+      break;
+    }
+    case instruction_code::equal:
+    {
+      s << op.result_name << " = "
+        << op.left_name << " == "
+        << op.right_name << "\n";
+      break;
+    }
+    case instruction_code::not_equal:
+    {
+      s << op.result_name << " = "
+        << op.left_name << " != "
+        << op.right_name << "\n";
+      break;
+    }
+    case instruction_code::less:
+    {
+      s << op.result_name << " = "
+        << op.left_name << " < "
+        << op.right_name << "\n";
+      break;
+    }
+    case instruction_code::less_or_equal:
+    {
+      s << op.result_name << " = "
+        << op.left_name << " <= "
+        << op.right_name << "\n";
+      break;
+    }
+    case instruction_code::greater:
+    {
+      s << op.result_name << " = "
+        << op.left_name << " > "
+        << op.right_name << "\n";
+      break;
+    }
+    case instruction_code::greater_or_equal:
+    {
+      s << op.result_name << " = "
+        << op.left_name << " >= "
+        << op.right_name << "\n";
+      break;
+    }
   }
   return s;
 }
@@ -397,6 +458,69 @@ std::ostream& operator<<(
       s << "$" << op.result_register << " = pow($"
         << op.input_registers.left << ", $"
         << op.input_registers.right << ")\n";
+      break;
+    }
+    case instruction_code::conditional_copy:
+    {
+      s << "if ($" << op.input_registers.left << ") $"
+        << op.result_register << " = $"
+        << op.input_registers.right << "\n";
+      break;
+    }
+    case instruction_code::logical_or:
+    {
+      s << "$" << op.result_register << " = $"
+        << op.input_registers.left << " || $"
+        << op.input_registers.right << "\n";
+      break;
+    }
+    case instruction_code::logical_and:
+    {
+      s << "$" << op.result_register << " = $"
+        << op.input_registers.left << " && $"
+        << op.input_registers.right << "\n";
+      break;
+    }
+    case instruction_code::equal:
+    {
+      s << "$" << op.result_register << " = $"
+        << op.input_registers.left << " == $"
+        << op.input_registers.right << "\n";
+      break;
+    }
+    case instruction_code::not_equal:
+    {
+      s << "$" << op.result_register << " = $"
+        << op.input_registers.left << " != $"
+        << op.input_registers.right << "\n";
+      break;
+    }
+    case instruction_code::less:
+    {
+      s << "$" << op.result_register << " = $"
+        << op.input_registers.left << " < $"
+        << op.input_registers.right << "\n";
+      break;
+    }
+    case instruction_code::less_or_equal:
+    {
+      s << "$" << op.result_register << " = $"
+        << op.input_registers.left << " <= $"
+        << op.input_registers.right << "\n";
+      break;
+    }
+    case instruction_code::greater:
+    {
+      s << "$" << op.result_register << " = $"
+        << op.input_registers.left << " > $"
+        << op.input_registers.right << "\n";
+      break;
+    }
+    case instruction_code::greater_or_equal:
+    {
+      s << "$" << op.result_register << " = $"
+        << op.input_registers.left << " >= $"
+        << op.input_registers.right << "\n";
       break;
     }
   }
