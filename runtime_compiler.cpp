@@ -627,20 +627,16 @@ class reader : public parsegen::reader
       }
       case production_assign:
       {
-        named_instruction op;
-        op.code = instruction_code::copy;
-        op.result_name = std::any_cast<std::string&&>(std::move(rhs.at(0)));
-        op.left_name = std::any_cast<std::string&&>(std::move(rhs.at(2)));
-        named_instructions.push_back(op);
+        handle_assign(
+          std::any_cast<std::string&&>(std::move(rhs.at(0))),
+          std::any_cast<std::string&&>(std::move(rhs.at(2))));
         break;
       }
       case production_declare_assign:
       {
-        named_instruction op;
-        op.code = instruction_code::copy;
-        op.result_name = std::any_cast<std::string&&>(std::move(rhs.at(1)));
-        op.left_name = std::any_cast<std::string&&>(std::move(rhs.at(3)));
-        named_instructions.push_back(op);
+        handle_assign(
+          std::any_cast<std::string&&>(std::move(rhs.at(1))),
+          std::any_cast<std::string&&>(std::move(rhs.at(3))));
         break;
       }
       case production_if:
@@ -813,6 +809,21 @@ class reader : public parsegen::reader
   std::string get_temporary()
   {
     return std::string("tmp") + std::to_string(++next_temporary);
+  }
+  void handle_assign(std::string const& destination, std::string const& source)
+  {
+    named_instruction op;
+    if (is_inside_conditional) {
+      op.code = instruction_code::conditional_copy;
+      op.result_name = destination;
+      op.left_name = condition_name;
+      op.right_name = source;
+    } else {
+      op.code = instruction_code::copy;
+      op.result_name = destination;
+      op.left_name = source;
+    }
+    named_instructions.push_back(op);
   }
   struct live_range {
     std::string name;
