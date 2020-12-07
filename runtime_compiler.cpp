@@ -32,6 +32,7 @@ enum token : std::size_t {
   token_close_block,
   token_logical_or,
   token_logical_and,
+  token_logical_not,
   token_equal,
   token_not_equal,
   token_less,
@@ -75,9 +76,11 @@ enum production : std::size_t {
   production_integer_literal,
   production_decay_to_or,
   production_decay_to_and,
+  production_decay_to_not,
   production_decay_to_relational,
   production_logical_or,
   production_logical_and,
+  production_logical_not,
   production_equal,
   production_not_equal,
   production_less,
@@ -116,6 +119,7 @@ parsegen::language build_language() {
   l.tokens[token_close_block] = {"close_block", "}" + space_regex};
   l.tokens[token_logical_or] = {"logical_or", "\\|\\|" + space_regex};
   l.tokens[token_logical_and] = {"logical_and", "&&" + space_regex};
+  l.tokens[token_logical_not] = {"logical_not", "!" + space_regex};
   l.tokens[token_equal] = {"equal", "==" + space_regex};
   l.tokens[token_not_equal] = {"not_equal", "!=" + space_regex};
   l.tokens[token_less] = {"less", "<" + space_regex};
@@ -191,12 +195,16 @@ parsegen::language build_language() {
   {"boolean_immutable", {"logical_or_expression"}};
   l.productions[production_decay_to_and] =
   {"logical_or_expression", {"logical_and_expression"}};
+  l.productions[production_decay_to_not] =
+  {"logical_and_expression", {"logical_not_expression"}};
   l.productions[production_decay_to_relational] =
-  {"logical_and_expression", {"relational_expression"}};
+  {"logical_not_expression", {"relational_expression"}};
   l.productions[production_logical_or] =
   {"logical_or_expression", {"logical_or_expression", "logical_or", "logical_and_expression"}};
   l.productions[production_logical_and] =
   {"logical_and_expression", {"logical_and_expression", "logical_and", "relational_expression"}};
+  l.productions[production_logical_not] =
+  {"logical_not_expression", {"logical_not", "relational_expression"}};
   l.productions[production_equal] =
   {"relational_expression", {"immutable", "equal", "immutable"}};
   l.productions[production_not_equal] =
@@ -332,6 +340,12 @@ std::ostream& operator<<(
       s << op.result_name << " = "
         << op.left_name << " && "
         << op.right_name << "\n";
+      break;
+    }
+    case instruction_code::logical_not:
+    {
+      s << op.result_name << " = !"
+        << op.left_name << "\n";
       break;
     }
     case instruction_code::equal:
@@ -479,6 +493,12 @@ std::ostream& operator<<(
       s << "$" << op.result_register << " = $"
         << op.input_registers.left << " && $"
         << op.input_registers.right << "\n";
+      break;
+    }
+    case instruction_code::logical_not:
+    {
+      s << "$" << op.result_register << " = !$"
+        << op.input_registers.left << "\n";
       break;
     }
     case instruction_code::equal:
@@ -734,6 +754,16 @@ class reader : public parsegen::reader
         auto result = get_temporary();
         named_instruction op;
         op.code = instruction_code::negate;
+        op.result_name = result;
+        op.left_name = std::any_cast<std::string&&>(std::move(rhs.at(1)));
+        named_instructions.push_back(op);
+        return result;
+      }
+      case production_logical_not:
+      {
+        auto result = get_temporary();
+        named_instruction op;
+        op.code = instruction_code::logical_not;
         op.result_name = result;
         op.left_name = std::any_cast<std::string&&>(std::move(rhs.at(1)));
         named_instructions.push_back(op);

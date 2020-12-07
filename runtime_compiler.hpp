@@ -27,6 +27,7 @@ enum class instruction_code : std::int32_t {
   conditional_copy,
   logical_or,
   logical_and,
+  logical_not,
   equal,
   not_equal,
   less,
@@ -152,6 +153,13 @@ inline void instruction::execute(double* registers) const {
         ((registers[this->input_registers.left] != 0.0) &&
          (registers[this->input_registers.right] != 0.0))
         ? 1.0 : 0.0;
+      break;
+    }
+    case instruction_code::logical_not:
+    {
+      registers[this->result_register] =
+        (registers[this->input_registers.left] != 0.0)
+        ? 0.0 : 1.0;
       break;
     }
     case instruction_code::equal:
