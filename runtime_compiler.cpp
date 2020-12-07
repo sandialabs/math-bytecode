@@ -586,6 +586,15 @@ class reader : public parsegen::reader
       case token_identifier: return remove_trailing_space(std::move(text));
       case token_integer: return std::stoi(text);
       case token_floating_point: return std::stod(text);
+      case token_else:
+      {
+        named_instruction op;
+        op.code = instruction_code::logical_not;
+        op.result_name = condition_name;
+        op.left_name = condition_name;
+        named_instructions.push_back(op);
+        break;
+      }
     }
     return std::any();
   }
