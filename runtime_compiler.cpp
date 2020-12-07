@@ -969,14 +969,3 @@ program compile(
 }
 
 }
-
-int main() {
-  auto p = rtc::compile(
-    "\n"
-"      double radius_factor = DISK_R/10.0;\n"
-"      field[0] = 20*exp(-( (coord[0]-DISK_X)^2 + (coord[1]-DISK_Y)^2 )/radius_factor);\n"
-"    ",
-      {"DISK_R", "DISK_X", "DISK_Y", "coord[0]", "coord[1]", "coord[2]"},
-      {"field[0]"},
-      "test");
-}
