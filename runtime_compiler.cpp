@@ -527,6 +527,26 @@ std::ostream& operator<<(
   return s;
 }
 
+instruction_code binary_operator_code(int p)
+{
+  switch (p) {
+    case production_sum: return instruction_code::add;
+    case production_difference: return instruction_code::subtract;
+    case production_product: return instruction_code::multiply;
+    case production_quotient: return instruction_code::divide;
+    case production_exponentiation: return instruction_code::pow;
+    case production_logical_or: return instruction_code::logical_or;
+    case production_logical_and: return instruction_code::logical_and;
+    case production_equal: return instruction_code::equal;
+    case production_not_equal: return instruction_code::not_equal;
+    case production_less: return instruction_code::less;
+    case production_less_or_equal: return instruction_code::less_or_equal;
+    case production_greater: return instruction_code::greater;
+    case production_greater_or_equal: return instruction_code::greater_or_equal;
+  }
+  throw parsegen::parse_error("BUG: unexpected binary production");
+}
+
 class reader : public parsegen::reader
 {
  public:
@@ -610,6 +630,9 @@ class reader : public parsegen::reader
       case production_decay_to_negation:
       case production_decay_to_exponentiation:
       case production_decay_to_leaf:
+      case production_decay_to_or:
+      case production_decay_to_and:
+      case production_decay_to_relational:
       case production_read:
       {
         return std::move(rhs.at(0));
@@ -668,43 +691,22 @@ class reader : public parsegen::reader
         return result;
       }
       case production_sum:
-      {
-        auto result = get_temporary();
-        named_instruction op;
-        op.code = instruction_code::add;
-        op.result_name = result;
-        op.left_name = std::any_cast<std::string&&>(std::move(rhs.at(0)));
-        op.right_name = std::any_cast<std::string&&>(std::move(rhs.at(2)));
-        named_instructions.push_back(op);
-        return result;
-      }
       case production_difference:
-      {
-        auto result = get_temporary();
-        named_instruction op;
-        op.code = instruction_code::subtract;
-        op.result_name = result;
-        op.left_name = std::any_cast<std::string&&>(std::move(rhs.at(0)));
-        op.right_name = std::any_cast<std::string&&>(std::move(rhs.at(2)));
-        named_instructions.push_back(op);
-        return result;
-      }
       case production_product:
-      {
-        auto result = get_temporary();
-        named_instruction op;
-        op.code = instruction_code::multiply;
-        op.result_name = result;
-        op.left_name = std::any_cast<std::string&&>(std::move(rhs.at(0)));
-        op.right_name = std::any_cast<std::string&&>(std::move(rhs.at(2)));
-        named_instructions.push_back(op);
-        return result;
-      }
       case production_quotient:
+      case production_exponentiation:
+      case production_logical_or:
+      case production_logical_and:
+      case production_equal:
+      case production_not_equal:
+      case production_less:
+      case production_less_or_equal:
+      case production_greater:
+      case production_greater_or_equal:
       {
         auto result = get_temporary();
         named_instruction op;
-        op.code = instruction_code::divide;
+        op.code = binary_operator_code(production);
         op.result_name = result;
         op.left_name = std::any_cast<std::string&&>(std::move(rhs.at(0)));
         op.right_name = std::any_cast<std::string&&>(std::move(rhs.at(2)));
@@ -718,17 +720,6 @@ class reader : public parsegen::reader
         op.code = instruction_code::negate;
         op.result_name = result;
         op.left_name = std::any_cast<std::string&&>(std::move(rhs.at(1)));
-        named_instructions.push_back(op);
-        return result;
-      }
-      case production_exponentiation:
-      {
-        auto result = get_temporary();
-        named_instruction op;
-        op.code = instruction_code::pow;
-        op.result_name = result;
-        op.left_name = std::any_cast<std::string&&>(std::move(rhs.at(0)));
-        op.right_name = std::any_cast<std::string&&>(std::move(rhs.at(2)));
         named_instructions.push_back(op);
         return result;
       }
