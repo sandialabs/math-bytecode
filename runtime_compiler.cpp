@@ -26,6 +26,18 @@ enum token : std::size_t {
   token_identifier,
   token_statement_end,
   token_argument_separator,
+  token_if,
+  token_else,
+  token_open_block,
+  token_close_block,
+  token_logical_or,
+  token_logical_and,
+  token_equal,
+  token_not_equal,
+  token_less,
+  token_less_or_equal,
+  token_greater,
+  token_greater_or_equal,
   token_count
 };
 
@@ -37,6 +49,10 @@ enum production : std::size_t {
   production_declare_assign,
   production_declare_scalar,
   production_declare_array,
+  production_if,
+  production_if_else,
+  production_if_header,
+  production_block,
   production_variable,
   production_array_entry,
   production_type_double,
@@ -57,6 +73,17 @@ enum production : std::size_t {
   production_exponentiation,
   production_floating_point_literal,
   production_integer_literal,
+  production_decay_to_or,
+  production_decay_to_and,
+  production_decay_to_relational,
+  production_logical_or,
+  production_logical_and,
+  production_equal,
+  production_not_equal,
+  production_less,
+  production_less_or_equal,
+  production_greater,
+  production_greater_or_equal,
   production_count
 };
 
@@ -68,7 +95,7 @@ parsegen::language build_language() {
   l.tokens[token_integer] = {
     "integer", int_regex + space_regex };
   l.tokens[token_floating_point] = {
-    "floating_point", int_regex + "\\.[0-9]*([eE][\\-\\+]?[0-9]+)?" + space_regex };
+    "floating_point", int_regex + "(\\.[0-9]*)?([eE][\\-\\+]?[0-9]+)?" + space_regex };
   l.tokens[token_plus] = {"plus", "\\+" + space_regex};
   l.tokens[token_minus] = {"minus", "\\-" + space_regex};
   l.tokens[token_times] = {"times", "\\*" + space_regex};
@@ -83,6 +110,18 @@ parsegen::language build_language() {
   l.tokens[token_identifier] = {"identifier", "[_A-Za-z][_A-Za-z0-9]*" + space_regex};
   l.tokens[token_statement_end] = {"statement_end", ";" + space_regex};
   l.tokens[token_argument_separator] = {"argument_separator", "," + space_regex};
+  l.tokens[token_if] = {"if", "if" + space_regex};
+  l.tokens[token_else] = {"else", "else" + space_regex};
+  l.tokens[token_open_block] = {"open_block", "{" + space_regex};
+  l.tokens[token_close_block] = {"close_block", "}" + space_regex};
+  l.tokens[token_logical_or] = {"logical_or", "\\|\\|" + space_regex};
+  l.tokens[token_logical_and] = {"logical_and", "&&" + space_regex};
+  l.tokens[token_equal] = {"equal", "==" + space_regex};
+  l.tokens[token_not_equal] = {"not_equal", "!=" + space_regex};
+  l.tokens[token_less] = {"less", "<" + space_regex};
+  l.tokens[token_less_or_equal] = {"less_or_equal", "<=" + space_regex};
+  l.tokens[token_greater] = {"greater", ">" + space_regex};
+  l.tokens[token_greater_or_equal] = {"greater_or_equal", ">=" + space_regex};
   l.productions.resize(production_count);
   l.productions[production_program] =
   {"program", {"statements"}};
@@ -98,6 +137,14 @@ parsegen::language build_language() {
   {"statement", {"type", "identifier", "statement_end"}};
   l.productions[production_declare_array] =
   {"statement", {"type", "identifier", "open_array", "integer", "close_array", "statement_end"}};
+  l.productions[production_if] =
+  {"statement", {"if_header", "block"}};
+  l.productions[production_if_else] =
+  {"statement", {"if_header", "block", "else", "block"}};
+  l.productions[production_if_header] =
+  {"if_header", {"if", "open_subexpression", "boolean_immutable", "close_subexpression"}};
+  l.productions[production_block] =
+  {"block", {"open_block", "statements", "close_block"}};
   l.productions[production_variable] =
   {"mutable", {"identifier"}};
   l.productions[production_array_entry] =
@@ -140,6 +187,28 @@ parsegen::language build_language() {
   {"leaf", {"floating_point"}};
   l.productions[production_integer_literal] =
   {"leaf", {"integer"}};
+  l.productions[production_decay_to_or] =
+  {"boolean_immutable", {"logical_or_expression"}};
+  l.productions[production_decay_to_and] =
+  {"logical_or_expression", {"logical_and_expression"}};
+  l.productions[production_decay_to_relational] =
+  {"logical_and_expression", {"relational_expression"}};
+  l.productions[production_logical_or] =
+  {"logical_or_expression", {"logical_or_expression", "logical_or", "logical_and_expression"}};
+  l.productions[production_logical_and] =
+  {"logical_and_expression", {"logical_and_expression", "logical_and", "relational_expression"}};
+  l.productions[production_equal] =
+  {"relational_expression", {"immutable", "equal", "immutable"}};
+  l.productions[production_not_equal] =
+  {"relational_expression", {"immutable", "not_equal", "immutable"}};
+  l.productions[production_less] =
+  {"relational_expression", {"immutable", "less", "immutable"}};
+  l.productions[production_less_or_equal] =
+  {"relational_expression", {"immutable", "less_or_equal", "immutable"}};
+  l.productions[production_greater] =
+  {"relational_expression", {"immutable", "greater", "immutable"}};
+  l.productions[production_greater_or_equal] =
+  {"relational_expression", {"immutable", "greater_or_equal", "immutable"}};
   return l;
 }
 
