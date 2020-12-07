@@ -614,6 +614,22 @@ class reader : public parsegen::reader
         named_instructions.push_back(op);
         break;
       }
+      case production_if:
+      case production_if_else:
+      {
+        is_inside_conditional = false;
+      }
+      case production_if_header:
+      {
+        if (is_inside_conditional) {
+          throw parsegen::parse_error(
+              "nested if/else blocks are not supported");
+        }
+        condition_name =
+          std::any_cast<std::string&&>(std::move(rhs.at(2)));
+        is_inside_conditional = true;
+        break;
+      }
       case production_variable:
       {
         return std::move(rhs.at(0));
@@ -905,6 +921,8 @@ class reader : public parsegen::reader
   std::vector<std::string> output_variable_names;
   std::map<std::string, int> input_registers;
   std::map<std::string, int> output_registers;
+  std::string condition_name;
+  bool is_inside_conditional{false};
 };
 
 program compile(
