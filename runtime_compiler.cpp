@@ -23,11 +23,11 @@ enum token : std::size_t {
   token_open_array,
   token_close_array,
   token_double,
+  token_if,
+  token_else,
   token_identifier,
   token_statement_end,
   token_argument_separator,
-  token_if,
-  token_else,
   token_open_block,
   token_close_block,
   token_logical_or,
@@ -110,11 +110,11 @@ parsegen::language build_language() {
   l.tokens[token_open_array] = {"open_array", "\\[" + space_regex};
   l.tokens[token_close_array] = {"close_array", "\\]" + space_regex};
   l.tokens[token_double] = {"double", "double" + space_regex};
+  l.tokens[token_if] = {"if", "if" + space_regex};
+  l.tokens[token_else] = {"else", "else" + space_regex};
   l.tokens[token_identifier] = {"identifier", "[_A-Za-z][_A-Za-z0-9]*" + space_regex};
   l.tokens[token_statement_end] = {"statement_end", ";" + space_regex};
   l.tokens[token_argument_separator] = {"argument_separator", "," + space_regex};
-  l.tokens[token_if] = {"if", "if" + space_regex};
-  l.tokens[token_else] = {"else", "else" + space_regex};
   l.tokens[token_open_block] = {"open_block", "{" + space_regex};
   l.tokens[token_close_block] = {"close_block", "}" + space_regex};
   l.tokens[token_logical_or] = {"logical_or", "\\|\\|" + space_regex};
@@ -643,6 +643,7 @@ class reader : public parsegen::reader
       case production_if_else:
       {
         is_inside_conditional = false;
+        break;
       }
       case production_if_header:
       {
@@ -673,6 +674,7 @@ class reader : public parsegen::reader
       case production_decay_to_leaf:
       case production_decay_to_or:
       case production_decay_to_and:
+      case production_decay_to_not:
       case production_decay_to_relational:
       case production_read:
       {
