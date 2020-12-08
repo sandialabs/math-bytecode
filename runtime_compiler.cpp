@@ -897,6 +897,13 @@ class reader : public parsegen::reader
     std::vector<int> free_registers;
     for (auto& i : live_ranges) {
       for (std::size_t j = 0; j < active.size();) {
+        if (i.when_written_to >= 0 && i.when_written_to < int(named_instructions.size())
+            && named_instructions.at(i.when_written_to).code == instruction_code::conditional_copy) {
+          if (active[j]->when_last_read == i.when_written_to) {
+            ++j;
+            continue;
+          }
+        }
         if (active[j]->when_last_read > i.when_written_to) {
           ++j;
           continue;
