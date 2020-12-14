@@ -291,6 +291,7 @@ program compile(
     std::string const& source_code,
     std::vector<std::string> const& input_variables,
     std::vector<std::string> const& output_variables = {},
-    std::string const& program_name = "runtime compiler input");
+    std::string const& program_name = "runtime compiler input",
+    bool verbose = false);
 
 }

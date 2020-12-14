@@ -5,7 +5,7 @@
 
 #include <algorithm>
 
-#include <iostream> //debug
+#include <iostream>
 
 namespace rtc {
 
@@ -572,12 +572,14 @@ class reader : public parsegen::reader
  public:
   reader(
       std::vector<std::string> const& input_variable_names_in,
-      std::vector<std::string> const& output_variable_names_in)
+      std::vector<std::string> const& output_variable_names_in,
+      bool verbose = false)
     :parsegen::reader(
         parsegen::build_reader_tables(
           rtc::build_language()))
     ,input_variable_names(input_variable_names_in)
     ,output_variable_names(output_variable_names_in)
+    ,is_verbose(verbose)
   {
   }
   virtual std::any at_shift(int token, std::string& text) override
@@ -604,24 +606,32 @@ class reader : public parsegen::reader
     switch (production) {
       case production_program:
       {
-        for (std::size_t i = 0; i < named_instructions.size(); ++i) {
-          std::cout << i << ": " << named_instructions[i];
+        if (is_verbose) {
+          for (std::size_t i = 0; i < named_instructions.size(); ++i) {
+            std::cout << i << ": " << named_instructions[i];
+          }
         }
         compute_live_ranges();
-        for (auto& lr : live_ranges) {
-          std::cout << lr.name << " at register " << lr.register_assigned
-            << " from " << lr.when_written_to << " to " << lr.when_last_read << '\n';
+        if (is_verbose) {
+          for (auto& lr : live_ranges) {
+            std::cout << lr.name << " at register " << lr.register_assigned
+              << " from " << lr.when_written_to << " to " << lr.when_last_read << '\n';
+          }
         }
         generate_instructions();
-        for (std::size_t i = 0; i < instructions.size(); ++i) {
-          std::cout << i << ": " << instructions[i];
+        if (is_verbose) {
+          for (std::size_t i = 0; i < instructions.size(); ++i) {
+            std::cout << i << ": " << instructions[i];
+          }
         }
         lookup_registers();
-        for (auto& pair : input_registers) {
-          std::cout << "input variable " << pair.first << " at register " << pair.second << '\n';
-        }
-        for (auto& pair : output_registers) {
-          std::cout << "output variable " << pair.first << " at register " << pair.second << '\n';
+        if (is_verbose) {
+          for (auto& pair : input_registers) {
+            std::cout << "input variable " << pair.first << " at register " << pair.second << '\n';
+          }
+          for (auto& pair : output_registers) {
+            std::cout << "output variable " << pair.first << " at register " << pair.second << '\n';
+          }
         }
         break;
       }
@@ -991,15 +1001,17 @@ class reader : public parsegen::reader
   std::map<std::string, int> output_registers;
   std::string condition_name;
   bool is_inside_conditional{false};
+  bool is_verbose;
 };
 
 program compile(
     std::string const& source_code,
     std::vector<std::string> const& input_variables,
     std::vector<std::string> const& output_variables,
-    std::string const& program_name)
+    std::string const& program_name,
+    bool verbose)
 {
-  rtc::reader reader(input_variables, output_variables);
+  rtc::reader reader(input_variables, output_variables, verbose);
   reader.read_string(
     rtc::remove_leading_space(source_code),
     program_name);
