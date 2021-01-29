@@ -234,6 +234,9 @@ class program_view {
   int instruction_count;
 };
 
+template <
+  class Allocator = p3a::allocator<instruction>,
+  class ExecutionPolicy = p3a::serial_execution>
 class program {
  public:
   program(
@@ -245,19 +248,25 @@ class program {
     ,m_output_registers(output_registers_in)
     ,m_register_count(register_count_in)
   {
-    m_host_instructions.resize(instructions_in.size());
-    p3a::copy(p3a::serial,
+    m_instructions.resize(instructions_in.size());
+    p3a::copy(p3a::device,
         instructions_in.cbegin(),
         instructions_in.cend(),
-        m_host_instructions.begin());
-    m_device_instructions.resize(m_host_instructions.size());
-    p3a::copy(p3a::device,
-        m_host_instructions.cbegin(),
-        m_host_instructions.cend(),
-        m_device_instructions.begin());
+        m_instructions.begin());
   }
-  [[nodiscard]]
-  int register_count() const { return m_register_count; }
+  template <class Allocator2, class ExecutionPolicy2>
+  explicit
+  program(program<Allocator2, ExecutionPolicy2> const& other)
+    :m_input_registers(other.input_registers())
+    ,m_output_registers(other.output_registers())
+    ,m_register_count(other.register_count())
+  {
+    m_instructions.resize(other.instructions().size());
+    p3a::copy(p3a::device,
+        other.instructions().cbegin(),
+        other.instructions().cend(),
+        m_instructions.begin());
+  }
   [[nodiscard]]
   int input_register(std::string const& name) const
   {
@@ -269,25 +278,33 @@ class program {
     return m_output_registers.at(name);
   }
   [[nodiscard]]
-  program_view host_view() const
+  program_view view() const
   {
-    return program_view(m_host_instructions.data(), int(m_host_instructions.size()));
+    return program_view(m_instructions.data(), int(m_instructions.size()));
   }
   [[nodiscard]]
-  program_view device_view() const
-  {
-    return program_view(m_device_instructions.data(), int(m_device_instructions.size()));
-  }
+  p3a::dynamic_array<instruction, Allocator, ExecutionPolicy> const&
+  instructions() const { return m_instructions; }
+  [[nodiscard]]
+  std::map<std::string, int> const&
+  input_registers() const { return m_input_registers; }
+  [[nodiscard]]
+  std::map<std::string, int> const&
+  output_registers() const { return m_output_registers; }
+  [[nodiscard]]
+  int register_count() const { return m_register_count; }
  private:
-  p3a::host_array<instruction> m_host_instructions;
-  p3a::device_array<instruction> m_device_instructions;
+  p3a::dynamic_array<instruction, Allocator, ExecutionPolicy> m_instructions;
   std::map<std::string, int> m_input_registers;
   std::map<std::string, int> m_output_registers;
   int m_register_count;
 };
 
+using host_program = program<p3a::allocator<instruction>, p3a::serial_execution>;
+using device_program = program<p3a::device_allocator<instruction>, p3a::device_execution>;
+
 [[nodiscard]]
-program compile(
+host_program compile(
     std::string const& source_code,
     std::vector<std::string> const& input_variables,
     std::vector<std::string> const& output_variables = {},

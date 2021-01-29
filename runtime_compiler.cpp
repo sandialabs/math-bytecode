@@ -809,7 +809,7 @@ class reader : public parsegen::reader
     }
     return std::any();
   }
-  program get_program()
+  program<> get_program()
   {
     return program(
         std::move(instructions),
@@ -1004,7 +1004,7 @@ class reader : public parsegen::reader
   bool is_verbose;
 };
 
-program compile(
+program<> compile(
     std::string const& source_code,
     std::vector<std::string> const& input_variables,
     std::vector<std::string> const& output_variables,
