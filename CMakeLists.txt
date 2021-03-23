@@ -20,6 +20,7 @@ endif()
 
 find_package(ParseGen REQUIRED)
 find_package(P3A REQUIRED)
+find_package(MPI REQUIRED)
 
 if (RTC_ENABLE_CUDA)
   set_source_files_properties(runtime_compiler.cpp PROPERTIES LANGUAGE CUDA)
