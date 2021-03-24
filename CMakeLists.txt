@@ -2,8 +2,6 @@ cmake_minimum_required(VERSION 3.12.0...3.18.0)
 
 project(RTC VERSION 0.1.0 LANGUAGES CXX)
 
-option(RTC_ENABLE_CUDA "Build GPU version with CUDA" OFF)
-
 if(WIN32 AND NOT CYGWIN)
   set(INSTALL_CMAKE_DIR CMake)
   set(INSTALL_BIN_DIR ".")
@@ -14,15 +12,12 @@ else()
   set(INSTALL_LIB_DIR "lib")
 endif()
 
-if (RTC_ENABLE_CUDA)
-  enable_language(CUDA)
-endif()
-
 find_package(ParseGen REQUIRED)
 find_package(P3A REQUIRED)
 find_package(MPI REQUIRED)
 
-if (RTC_ENABLE_CUDA)
+if (P3A_ENABLE_CUDA)
+  enable_language(CUDA)
   set_source_files_properties(runtime_compiler.cpp PROPERTIES LANGUAGE CUDA)
 endif()
 
