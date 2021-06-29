@@ -809,9 +809,9 @@ class reader : public parsegen::reader
     }
     return std::any();
   }
-  program<> get_program()
+  host_program get_program()
   {
-    return program(
+    return host_program(
         std::move(instructions),
         std::move(input_registers),
         std::move(output_registers),
@@ -1004,7 +1004,7 @@ class reader : public parsegen::reader
   bool is_verbose;
 };
 
-program<> compile(
+host_program compile(
     std::string const& source_code,
     std::vector<std::string> const& input_variables,
     std::vector<std::string> const& output_variables,

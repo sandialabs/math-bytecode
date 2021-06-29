@@ -235,10 +235,13 @@ class program_view {
 };
 
 template <
-  class Allocator = p3a::allocator<instruction>,
-  class ExecutionPolicy = p3a::serial_execution>
+  class Allocator,
+  class ExecutionPolicy>
 class program {
  public:
+  using allocator_type = Allocator;
+  using execution_policy = ExecutionPolicy;
+  using instructions_type = p3a::dynamic_array<::rtc::instruction, allocator_type, execution_policy>;
   program(
       std::vector<instruction> const& instructions_in,
       std::map<std::string, int>&& input_registers_in,
@@ -283,7 +286,7 @@ class program {
     return program_view(m_instructions.data(), int(m_instructions.size()));
   }
   [[nodiscard]]
-  p3a::dynamic_array<instruction, Allocator, ExecutionPolicy> const&
+  instructions_type const&
   instructions() const { return m_instructions; }
   [[nodiscard]]
   std::map<std::string, int> const&
@@ -294,7 +297,7 @@ class program {
   [[nodiscard]]
   int register_count() const { return m_register_count; }
  private:
-  p3a::dynamic_array<instruction, Allocator, ExecutionPolicy> m_instructions;
+  instructions_type m_instructions;
   std::map<std::string, int> m_input_registers;
   std::map<std::string, int> m_output_registers;
   int m_register_count;
