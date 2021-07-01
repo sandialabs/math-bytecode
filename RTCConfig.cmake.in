@@ -1,7 +1,0 @@
-# Compute paths
-get_filename_component(RTC_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
-
-# Our library dependencies (contains definitions for IMPORTED targets)
-if(NOT TARGET hpc AND NOT RTC_BINARY_DIR)
-  include("${RTC_CMAKE_DIR}/RTCTargets.cmake")
-endif()

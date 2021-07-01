@@ -1,0 +1,7 @@
+# Compute paths
+get_filename_component(rtc_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+
+# Our library dependencies (contains definitions for IMPORTED targets)
+if(NOT TARGET runtime-compiler AND NOT rtc_BINARY_DIR)
+  include("${rtc_CMAKE_DIR}/rtc-targets.cmake")
+endif()
