@@ -13,10 +13,10 @@ else()
 endif()
 
 find_package(parsegen REQUIRED)
-find_package(P3A REQUIRED)
+find_package(p3a REQUIRED)
 find_package(MPI REQUIRED)
 
-if (P3A_ENABLE_CUDA)
+if (p3a_ENABLE_CUDA)
   enable_language(CUDA)
   set_source_files_properties(runtime_compiler.cpp PROPERTIES LANGUAGE CUDA)
 endif()
