@@ -12,7 +12,7 @@ else()
   set(INSTALL_LIB_DIR "lib")
 endif()
 
-find_package(ParseGen REQUIRED)
+find_package(parsegen REQUIRED)
 find_package(P3A REQUIRED)
 find_package(MPI REQUIRED)
 
