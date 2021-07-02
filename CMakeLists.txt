@@ -21,6 +21,10 @@ if (P3A_ENABLE_CUDA)
   set_source_files_properties(runtime_compiler.cpp PROPERTIES LANGUAGE CUDA)
 endif()
 
+if (P3A_ENABLE_HIP)
+  find_package(hip REQUIRED)
+endif()
+
 add_library(runtime_compiler runtime_compiler.cpp)
 
 target_compile_features(runtime_compiler PUBLIC cxx_std_17)
