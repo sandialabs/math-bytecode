@@ -4,12 +4,8 @@ project(rtc VERSION 1.0.0 LANGUAGES CXX)
 
 if(WIN32 AND NOT CYGWIN)
   set(INSTALL_CMAKE_DIR CMake)
-  set(INSTALL_BIN_DIR ".")
-  set(INSTALL_LIB_DIR ".")
 else()
   set(INSTALL_CMAKE_DIR lib/cmake/${PROJECT_NAME})
-  set(INSTALL_BIN_DIR "bin")
-  set(INSTALL_LIB_DIR "lib")
 endif()
 
 find_package(parsegen REQUIRED)
