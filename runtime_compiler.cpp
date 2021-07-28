@@ -24,6 +24,8 @@ enum token : std::size_t {
   token_close_array,
   token_double,
   token_const,
+  token_reference,
+  token_void,
   token_if,
   token_else,
   token_identifier,
@@ -51,6 +53,14 @@ enum production : std::size_t {
   production_declare_assign,
   production_declare_scalar,
   production_declare_array,
+  production_define_function,
+  production_function_signature,
+  production_first_parameter,
+  production_next_parameter,
+  production_input_scalar_parameter,
+  production_output_scalar_parameter,
+  production_input_array_parameter,
+  production_output_array_parameter,
   production_if,
   production_if_else,
   production_if_header,
@@ -113,6 +123,8 @@ parsegen::language build_language() {
   l.tokens[token_close_array] = {"close_array", "\\]" + space_regex};
   l.tokens[token_double] = {"double", "double" + space_regex};
   l.tokens[token_const] = {"const", "const" + space_regex};
+  l.tokens[token_reference] = {"reference", "&" + space_regex};
+  l.tokens[token_void] = {"void", "void" + space_regex};
   l.tokens[token_if] = {"if", "if" + space_regex};
   l.tokens[token_else] = {"else", "else" + space_regex};
   l.tokens[token_identifier] = {"identifier", "[_A-Za-z][_A-Za-z0-9]*" + space_regex};
@@ -144,6 +156,22 @@ parsegen::language build_language() {
   {"statement", {"type", "identifier", "statement_end"}};
   l.productions[production_declare_array] =
   {"statement", {"type", "identifier", "open_array", "integer", "close_array", "statement_end"}};
+  l.productions[production_define_function] =
+  {"statement", {"function_signature", "block"}};
+  l.productions[production_function_signature] =
+  {"function_signature", {"void", "identifier", "open_parens", "parameters", "close_parens"}};
+  l.productions[production_first_parameter] =
+  {"parameters", {"parameter"}};
+  l.productions[production_next_parameter] =
+  {"parameters", {"parameters", "argument_separator", "parameter"}};
+  l.productions[production_input_scalar_parameter] =
+  {"parameter", {"const", "double", "identifier"}};
+  l.productions[production_output_scalar_parameter] =
+  {"parameter", {"double", "reference", "identifier"}};
+  l.productions[production_input_array_parameter] =
+  {"parameter", {"const", "double", "identifier", "open_array", "integer", "close_array"}};
+  l.productions[production_output_array_parameter] =
+  {"parameter", {"double", "identifier", "open_array", "integer", "close_array"}};
   l.productions[production_if] =
   {"statement", {"if_header", "block"}};
   l.productions[production_if_else] =
