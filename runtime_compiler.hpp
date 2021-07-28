@@ -342,9 +342,7 @@ class executable_function {
       ScalarType& argument) const
   {
     int const output_register = output_registers[output_scalar_count];
-    if (output_register >= 0) {
-      argument = registers[output_register];
-    }
+    argument = registers[output_register];
     return output_scalar_count + 1;
   }
   template <class ScalarType, std::size_t N>
@@ -356,9 +354,7 @@ class executable_function {
   {
     for (std::size_t i = 0; i < N; ++i) {
       int const output_register = output_registers[output_scalar_count];
-      if (output_register >= 0) {
-        argument[i] = registers[output_register];
-      }
+      argument[i] = registers[output_register];
       ++output_scalar_count;
     }
     return output_scalar_count;

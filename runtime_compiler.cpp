@@ -1035,7 +1035,9 @@ class reader : public parsegen::reader
         return lr.register_assigned;
       }
     }
-    return -1;
+    throw parsegen::parse_error(
+        "function does not set required output variable" +
+        name);
   }
   void lookup_registers()
   {
