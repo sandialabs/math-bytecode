@@ -18,8 +18,8 @@ enum token : std::size_t {
   token_divide,
   token_raise,
   token_assign,
-  token_open_subexpression,
-  token_close_subexpression,
+  token_open_parens,
+  token_close_parens,
   token_open_array,
   token_close_array,
   token_double,
@@ -107,8 +107,8 @@ parsegen::language build_language() {
   l.tokens[token_divide] = {"divide", "/" + space_regex};
   l.tokens[token_raise] = {"raise", "\\^" + space_regex};
   l.tokens[token_assign] = {"assign", "=" + space_regex};
-  l.tokens[token_open_subexpression] = {"open_subexpression", "\\(" + space_regex};
-  l.tokens[token_close_subexpression] = {"close_subexpression", "\\)" + space_regex};
+  l.tokens[token_open_parens] = {"open_parens", "\\(" + space_regex};
+  l.tokens[token_close_parens] = {"close_parens", "\\)" + space_regex};
   l.tokens[token_open_array] = {"open_array", "\\[" + space_regex};
   l.tokens[token_close_array] = {"close_array", "\\]" + space_regex};
   l.tokens[token_double] = {"double", "double" + space_regex};
@@ -149,7 +149,7 @@ parsegen::language build_language() {
   l.productions[production_if_else] =
   {"statement", {"if_header", "block", "else", "block"}};
   l.productions[production_if_header] =
-  {"if_header", {"if", "open_subexpression", "boolean_immutable", "close_subexpression"}};
+  {"if_header", {"if", "open_parens", "boolean_immutable", "close_parens"}};
   l.productions[production_block] =
   {"block", {"open_block", "statements", "close_block"}};
   l.productions[production_variable] =
@@ -173,11 +173,11 @@ parsegen::language build_language() {
   l.productions[production_read] =
   {"leaf", {"mutable"}};
   l.productions[production_subexpression] =
-  {"leaf", {"open_subexpression", "immutable", "close_subexpression"}};
+  {"leaf", {"open_parens", "immutable", "close_parens"}};
   l.productions[production_unary_call] =
-  {"leaf", {"identifier", "open_subexpression", "immutable", "close_subexpression"}};
+  {"leaf", {"identifier", "open_parens", "immutable", "close_parens"}};
   l.productions[production_binary_call] =
-  {"leaf", {"identifier", "open_subexpression", "immutable", "argument_separator", "immutable", "close_subexpression"}};
+  {"leaf", {"identifier", "open_parens", "immutable", "argument_separator", "immutable", "close_parens"}};
   l.productions[production_sum] =
   {"sum_or_difference", {"sum_or_difference", "plus", "product_or_quotient"}};
   l.productions[production_difference] =
