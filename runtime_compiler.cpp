@@ -143,7 +143,7 @@ parsegen::language build_language() {
   l.tokens[token_greater_or_equal] = {"greater_or_equal", ">=" + space_regex};
   l.productions.resize(production_count);
   l.productions[production_program] =
-  {"program", {"statements"}};
+  {"program", {"function_definition"}};
   l.productions[production_first_statement] =
   {"statements", {"statement"}};
   l.productions[production_next_statement] =
@@ -157,7 +157,7 @@ parsegen::language build_language() {
   l.productions[production_declare_array] =
   {"statement", {"type", "identifier", "open_array", "integer", "close_array", "statement_end"}};
   l.productions[production_define_function] =
-  {"statement", {"function_signature", "block"}};
+  {"function_definition", {"function_signature", "block"}};
   l.productions[production_function_signature] =
   {"function_signature", {"void", "identifier", "open_parens", "parameters", "close_parens"}};
   l.productions[production_first_parameter] =
@@ -603,15 +603,10 @@ instruction_code binary_operator_code(int p)
 class reader : public parsegen::reader
 {
  public:
-  reader(
-      std::vector<std::string> const& input_variable_names_in,
-      std::vector<std::string> const& output_variable_names_in,
-      bool verbose = false)
+  reader(bool verbose)
     :parsegen::reader(
         parsegen::build_reader_tables(
           rtc::build_language()))
-    ,input_variable_names(input_variable_names_in)
-    ,output_variable_names(output_variable_names_in)
     ,is_verbose(verbose)
   {
   }
@@ -659,12 +654,40 @@ class reader : public parsegen::reader
         }
         lookup_registers();
         if (is_verbose) {
-          for (auto& pair : input_registers) {
-            std::cout << "input variable " << pair.first << " at register " << pair.second << '\n';
+          for (std::size_t i = 0; i < input_registers.size(); ++i) {
+            std::cout << "input variable " << input_variable_names[i] << " at register " << input_registers[i] << '\n';
           }
-          for (auto& pair : output_registers) {
-            std::cout << "output variable " << pair.first << " at register " << pair.second << '\n';
+          for (std::size_t i = 0; i < output_registers.size(); ++i) {
+            std::cout << "output variable " << output_variable_names[i] << " at register " << output_registers[i] << '\n';
           }
+        }
+        break;
+      }
+      case production_input_scalar_parameter:
+      {
+        input_variable_names.push_back(std::any_cast<std::string&&>(std::move(rhs.at(2))));
+        break;
+      }
+      case production_output_scalar_parameter:
+      {
+        output_variable_names.push_back(std::any_cast<std::string&&>(std::move(rhs.at(2))));
+        break;
+      }
+      case production_input_array_parameter:
+      {
+        int const n = std::any_cast<int>(rhs.at(4));
+        std::string const name(std::any_cast<std::string&&>(std::move(rhs.at(2))));
+        for (int i = 0; i < n; ++i) {
+          input_variable_names.push_back(name + "[" + std::to_string(i) + "]");
+        }
+        break;
+      }
+      case production_output_array_parameter:
+      {
+        int const n = std::any_cast<int>(rhs.at(3));
+        std::string const name(std::any_cast<std::string&&>(std::move(rhs.at(1))));
+        for (int i = 0; i < n; ++i) {
+          output_variable_names.push_back(name + "[" + std::to_string(i) + "]");
         }
         break;
       }
@@ -842,9 +865,9 @@ class reader : public parsegen::reader
     }
     return std::any();
   }
-  host_program get_program()
+  host_function get_function()
   {
-    return host_program(
+    return host_function(
         std::move(instructions),
         std::move(input_registers),
         std::move(output_registers),
@@ -1017,10 +1040,10 @@ class reader : public parsegen::reader
   void lookup_registers()
   {
     for (auto& input_name : input_variable_names) {
-      input_registers[input_name] = get_input_register(input_name);
+      input_registers.push_back(get_input_register(input_name));
     }
     for (auto& output_name : output_variable_names) {
-      output_registers[output_name] = get_output_register(output_name);
+      output_registers.push_back(get_output_register(output_name));
     }
   }
   int next_temporary{0};
@@ -1030,25 +1053,22 @@ class reader : public parsegen::reader
   int register_count{0};
   std::vector<std::string> input_variable_names;
   std::vector<std::string> output_variable_names;
-  std::map<std::string, int> input_registers;
-  std::map<std::string, int> output_registers;
+  std::vector<int> input_registers;
+  std::vector<int> output_registers;
   std::string condition_name;
   bool is_inside_conditional{false};
   bool is_verbose;
 };
 
-host_program compile(
+host_function compile(
     std::string const& source_code,
-    std::vector<std::string> const& input_variables,
-    std::vector<std::string> const& output_variables,
-    std::string const& program_name,
     bool verbose)
 {
-  rtc::reader reader(input_variables, output_variables, verbose);
+  rtc::reader reader(verbose);
   reader.read_string(
     rtc::remove_leading_space(source_code),
-    program_name);
-  return reader.get_program();
+    "runtime math function");
+  return reader.get_function();
 }
 
 }

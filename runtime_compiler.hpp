@@ -2,7 +2,6 @@
 
 #include <cstdint>
 #include <cmath>
-#include <map>
 #include <string>
 #include <vector>
 
@@ -47,12 +46,14 @@ class instruction {
     } input_registers;
     double constant;
   };
+  template <class ScalarType>
   P3A_HOST P3A_DEVICE P3A_ALWAYS_INLINE
-  inline void execute(double* registers) const;
+  inline void execute(ScalarType* registers) const;
 };
 
+  template <class ScalarType>
 P3A_HOST P3A_DEVICE P3A_ALWAYS_INLINE
-inline void instruction::execute(double* registers) const {
+inline void instruction::execute(ScalarType* registers) const {
   switch (this->code) {
     case instruction_code::copy:
     {
@@ -213,105 +214,246 @@ inline void instruction::execute(double* registers) const {
   }
 }
 
-class program_view {
+class executable_function {
  public:
-  program_view(
+  executable_function(
       instruction const* instructions_in,
-      int instruction_count_in)
+      int instruction_count_in,
+      int const* input_registers_in,
+      int,
+      int const* output_registers_in,
+      int)
     :instructions(instructions_in)
     ,instruction_count(instruction_count_in)
+    ,input_registers(input_registers_in)
+    ,output_registers(output_registers_in)
   {
   }
+  template <class ScalarType>
   P3A_HOST P3A_DEVICE P3A_ALWAYS_INLINE
-  inline void execute(double* registers) const
+  inline void execute(ScalarType* registers) const
   {
     for (int i = 0; i < instruction_count; ++i) {
       instructions[i].execute(registers);
     }
   }
+  template <class ScalarType, class ... ArgumentTypes>
+  P3A_HOST P3A_DEVICE P3A_ALWAYS_INLINE
+  inline void operator()(
+      ScalarType* registers,
+      ArgumentTypes ... arguments) const
+  {
+    handle_input_arguments(registers, 0, arguments ...);
+    execute(registers);
+    handle_output_arguments(registers, 0, arguments ...);
+  }
+  template <class ScalarType, class FirstArgumentType, class ... NextArgumentTypes>
+  P3A_HOST P3A_DEVICE P3A_ALWAYS_INLINE
+  inline void handle_input_arguments(
+      ScalarType* registers,
+      int input_scalar_count,
+      FirstArgumentType first_argument,
+      NextArgumentTypes ... next_arguments) const
+  {
+    input_scalar_count = handle_input_argument(registers, input_scalar_count, first_argument);
+    handle_input_arguments(registers, input_scalar_count, next_arguments ...);
+  }
+  template <class ScalarType, class LastArgumentType>
+  P3A_HOST P3A_DEVICE P3A_ALWAYS_INLINE
+  inline void handle_input_arguments(
+      ScalarType* registers,
+      int input_scalar_count,
+      LastArgumentType last_argument) const
+  {
+    handle_input_argument(registers, input_scalar_count, last_argument);
+  }
+  template <class ScalarType, class NotInputType>
+  P3A_HOST P3A_DEVICE P3A_ALWAYS_INLINE
+  inline int handle_input_argument(
+      ScalarType* registers,
+      int input_scalar_count,
+      NotInputType argument) const
+  {
+    return input_scalar_count;
+  }
+  template <class ScalarType>
+  P3A_HOST P3A_DEVICE P3A_ALWAYS_INLINE
+  inline int handle_input_argument(
+      ScalarType* registers,
+      int input_scalar_count,
+      const ScalarType& argument) const
+  {
+    int const input_register = input_registers[input_scalar_count];
+    if (input_register >= 0) {
+      registers[input_register] = argument;
+    }
+    return input_scalar_count + 1;
+  }
+  template <class ScalarType, std::size_t N>
+  P3A_HOST P3A_DEVICE P3A_ALWAYS_INLINE
+  inline int handle_input_argument(
+      ScalarType* registers,
+      int input_scalar_count,
+      const ScalarType (&argument) [N]) const
+  {
+    for (std::size_t i = 0; i < N; ++i) {
+      int const input_register = input_registers[input_scalar_count];
+      if (input_register >= 0) {
+        registers[input_register] = argument[i];
+      }
+      ++input_scalar_count;
+    }
+    return input_scalar_count;
+  }
+  template <class ScalarType, class FirstArgumentType, class ... NextArgumentTypes>
+  P3A_HOST P3A_DEVICE P3A_ALWAYS_INLINE
+  inline void handle_output_arguments(
+      ScalarType* registers,
+      int output_scalar_count,
+      FirstArgumentType first_argument,
+      NextArgumentTypes ... next_arguments) const
+  {
+    output_scalar_count = handle_output_argument(registers, output_scalar_count, first_argument);
+    handle_output_arguments(registers, output_scalar_count, next_arguments ...);
+  }
+  template <class ScalarType, class LastArgumentType>
+  P3A_HOST P3A_DEVICE P3A_ALWAYS_INLINE
+  inline void handle_output_arguments(
+      ScalarType* registers,
+      int output_scalar_count,
+      LastArgumentType last_argument) const
+  {
+    handle_output_argument(registers, output_scalar_count, last_argument);
+  }
+  template <class ScalarType, class NotOutputType>
+  P3A_HOST P3A_DEVICE P3A_ALWAYS_INLINE
+  inline int handle_output_argument(
+      ScalarType* registers,
+      int output_scalar_count,
+      NotOutputType argument) const
+  {
+    return output_scalar_count;
+  }
+  template <class ScalarType>
+  P3A_HOST P3A_DEVICE P3A_ALWAYS_INLINE
+  inline int handle_output_argument(
+      ScalarType* registers,
+      int output_scalar_count,
+      ScalarType& argument) const
+  {
+    int const output_register = output_registers[output_scalar_count];
+    if (output_register >= 0) {
+      argument = registers[output_register];
+    }
+    return output_scalar_count + 1;
+  }
+  template <class ScalarType, std::size_t N>
+  P3A_HOST P3A_DEVICE P3A_ALWAYS_INLINE
+  inline int handle_output_argument(
+      ScalarType* registers,
+      int output_scalar_count,
+      ScalarType (&argument) [N])
+  {
+    for (std::size_t i = 0; i < N; ++i) {
+      int const output_register = output_registers[output_scalar_count];
+      if (output_register >= 0) {
+        argument[i] = registers[output_register];
+      }
+      ++output_scalar_count;
+    }
+    return output_scalar_count;
+  }
  private:
   instruction const* instructions;
   int instruction_count;
+  int const* input_registers;
+  int const* output_registers;
 };
 
 template <
   class Allocator,
   class ExecutionPolicy>
-class program {
+class compiled_function {
  public:
-  using allocator_type = Allocator;
-  using execution_policy = ExecutionPolicy;
-  using instructions_type = p3a::dynamic_array<::rtc::instruction, allocator_type, execution_policy>;
-  program(
+  using instructions_type = p3a::dynamic_array<::rtc::instruction, Allocator, ExecutionPolicy>;
+  using registers_type = p3a::dynamic_array<int, typename Allocator::template rebind<int>::other, ExecutionPolicy>;
+  compiled_function(
       std::vector<instruction> const& instructions_in,
-      std::map<std::string, int>&& input_registers_in,
-      std::map<std::string, int>&& output_registers_in,
+      std::vector<int> const& input_registers_in,
+      std::vector<int> const& output_registers_in,
       int register_count_in)
-    :m_input_registers(input_registers_in)
-    ,m_output_registers(output_registers_in)
-    ,m_register_count(register_count_in)
+    :m_register_count(register_count_in)
   {
     m_instructions.resize(instructions_in.size());
-    p3a::copy(p3a::device,
+    p3a::copy(m_instructions.get_execution_policy(),
         instructions_in.cbegin(),
         instructions_in.cend(),
         m_instructions.begin());
+    m_input_registers.resize(input_registers_in.size());
+    p3a::copy(m_input_registers.get_execution_policy(),
+        input_registers_in.cbegin(),
+        input_registers_in.cend(),
+        m_input_registers.begin());
+    m_output_registers.resize(output_registers_in.size());
+    p3a::copy(m_output_registers.get_execution_policy(),
+        output_registers_in.cbegin(),
+        output_registers_in.cend(),
+        m_output_registers.begin());
   }
   template <class Allocator2, class ExecutionPolicy2>
   explicit
-  program(program<Allocator2, ExecutionPolicy2> const& other)
-    :m_input_registers(other.input_registers())
-    ,m_output_registers(other.output_registers())
-    ,m_register_count(other.register_count())
+  compiled_function(compiled_function<Allocator2, ExecutionPolicy2> const& other)
+    :m_register_count(other.register_count())
   {
     m_instructions.resize(other.instructions().size());
     p3a::copy(p3a::device,
         other.instructions().cbegin(),
         other.instructions().cend(),
         m_instructions.begin());
+    m_input_registers.resize(other.input_registers().size());
+    p3a::copy(m_input_registers.get_execution_policy(),
+        other.input_registers().cbegin(),
+        other.input_registers().cend(),
+        m_input_registers.begin());
+    m_output_registers.resize(other.output_registers().size());
+    p3a::copy(m_output_registers.get_execution_policy(),
+        other.output_registers().cbegin(),
+        other.output_registers().cend(),
+        m_output_registers.begin());
   }
   [[nodiscard]]
-  int input_register(std::string const& name) const
+  executable_function executable() const
   {
-    return m_input_registers.at(name);
-  }
-  [[nodiscard]]
-  int output_register(std::string const& name) const
-  {
-    return m_output_registers.at(name);
-  }
-  [[nodiscard]]
-  program_view view() const
-  {
-    return program_view(m_instructions.data(), int(m_instructions.size()));
+    return executable_function(
+        m_instructions.data(),
+        int(m_instructions.size()),
+        m_input_registers.data(),
+        int(m_input_registers.size()),
+        m_output_registers.data(),
+        int(m_output_registers.size()));
   }
   [[nodiscard]]
   instructions_type const&
   instructions() const { return m_instructions; }
   [[nodiscard]]
-  std::map<std::string, int> const&
+  registers_type const&
   input_registers() const { return m_input_registers; }
   [[nodiscard]]
-  std::map<std::string, int> const&
+  registers_type const&
   output_registers() const { return m_output_registers; }
   [[nodiscard]]
   int register_count() const { return m_register_count; }
  private:
   instructions_type m_instructions;
-  std::map<std::string, int> m_input_registers;
-  std::map<std::string, int> m_output_registers;
+  registers_type m_input_registers;
+  registers_type m_output_registers;
   int m_register_count;
 };
 
-using host_program = program<p3a::allocator<instruction>, p3a::serial_execution>;
-using device_program = program<p3a::device_allocator<instruction>, p3a::device_execution>;
+using host_function = compiled_function<p3a::allocator<instruction>, p3a::serial_execution>;
+using device_function = compiled_function<p3a::device_allocator<instruction>, p3a::device_execution>;
 
 [[nodiscard]]
-host_program compile(
-    std::string const& source_code,
-    std::vector<std::string> const& input_variables,
-    std::vector<std::string> const& output_variables = {},
-    std::string const& program_name = "runtime compiler input",
-    bool verbose = false);
+host_function compile(std::string const& source_code, bool verbose = false);
 
 }
