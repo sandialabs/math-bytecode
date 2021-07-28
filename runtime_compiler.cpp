@@ -23,6 +23,7 @@ enum token : std::size_t {
   token_open_array,
   token_close_array,
   token_double,
+  token_const,
   token_if,
   token_else,
   token_identifier,
@@ -57,6 +58,7 @@ enum production : std::size_t {
   production_variable,
   production_array_entry,
   production_type_double,
+  production_type_const_double,
   production_sum_or_difference,
   production_product_or_quotient,
   production_decay_to_negation,
@@ -110,6 +112,7 @@ parsegen::language build_language() {
   l.tokens[token_open_array] = {"open_array", "\\[" + space_regex};
   l.tokens[token_close_array] = {"close_array", "\\]" + space_regex};
   l.tokens[token_double] = {"double", "double" + space_regex};
+  l.tokens[token_const] = {"const", "const" + space_regex};
   l.tokens[token_if] = {"if", "if" + space_regex};
   l.tokens[token_else] = {"else", "else" + space_regex};
   l.tokens[token_identifier] = {"identifier", "[_A-Za-z][_A-Za-z0-9]*" + space_regex};
@@ -155,6 +158,8 @@ parsegen::language build_language() {
   {"mutable", {"identifier", "open_array", "integer", "close_array"}};
   l.productions[production_type_double] =
   {"type", {"double"}};
+  l.productions[production_type_const_double] =
+  {"type", {"const", "double"}};
   l.productions[production_sum_or_difference] =
   {"immutable", {"sum_or_difference"}};
   l.productions[production_product_or_quotient] =
