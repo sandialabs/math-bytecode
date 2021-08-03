@@ -8,7 +8,7 @@
 #include "p3a_macros.hpp"
 #include "p3a_dynamic_array.hpp"
 
-namespace rtc {
+namespace math_bytecode {
 
 enum class instruction_code : std::int32_t {
   copy,
@@ -241,31 +241,32 @@ class executable_function {
   P3A_HOST P3A_DEVICE P3A_ALWAYS_INLINE
   inline void operator()(
       ScalarType* registers,
-      ArgumentTypes ... arguments) const
+      ArgumentTypes&& ... arguments) const
   {
-    handle_input_arguments(registers, 0, arguments ...);
+    handle_input_arguments(registers, 0, std::forward<ArgumentTypes>(arguments) ...);
     execute(registers);
-    handle_output_arguments(registers, 0, arguments ...);
+    handle_output_arguments(registers, 0, std::forward<ArgumentTypes>(arguments) ...);
   }
   template <class ScalarType, class FirstArgumentType, class ... NextArgumentTypes>
   P3A_HOST P3A_DEVICE P3A_ALWAYS_INLINE
   inline void handle_input_arguments(
       ScalarType* registers,
       int input_scalar_count,
-      FirstArgumentType first_argument,
-      NextArgumentTypes ... next_arguments) const
+      FirstArgumentType&& first_argument,
+      NextArgumentTypes&& ... next_arguments) const
   {
-    input_scalar_count = handle_input_argument(registers, input_scalar_count, first_argument);
-    handle_input_arguments(registers, input_scalar_count, next_arguments ...);
+    input_scalar_count = handle_input_argument(
+        registers, input_scalar_count, std::forward<FirstArgumentType>(first_argument));
+    handle_input_arguments(registers, input_scalar_count, std::forward<NextArgumentTypes>(next_arguments) ...);
   }
   template <class ScalarType, class LastArgumentType>
   P3A_HOST P3A_DEVICE P3A_ALWAYS_INLINE
   inline void handle_input_arguments(
       ScalarType* registers,
       int input_scalar_count,
-      LastArgumentType last_argument) const
+      LastArgumentType&& last_argument) const
   {
-    handle_input_argument(registers, input_scalar_count, last_argument);
+    handle_input_argument(registers, input_scalar_count, std::forward<LastArgumentType>(last_argument));
   }
   template <class ScalarType, class NotInputType>
   P3A_HOST P3A_DEVICE P3A_ALWAYS_INLINE
@@ -305,32 +306,42 @@ class executable_function {
     }
     return input_scalar_count;
   }
+  template <class ScalarType, std::size_t N>
+  P3A_HOST P3A_DEVICE P3A_ALWAYS_INLINE
+  inline int handle_input_argument(
+      ScalarType* registers,
+      int input_scalar_count,
+      ScalarType (&argument) [N]) const
+  {
+    return input_scalar_count;
+  }
   template <class ScalarType, class FirstArgumentType, class ... NextArgumentTypes>
   P3A_HOST P3A_DEVICE P3A_ALWAYS_INLINE
   inline void handle_output_arguments(
       ScalarType* registers,
       int output_scalar_count,
-      FirstArgumentType first_argument,
-      NextArgumentTypes ... next_arguments) const
+      FirstArgumentType&& first_argument,
+      NextArgumentTypes&& ... next_arguments) const
   {
-    output_scalar_count = handle_output_argument(registers, output_scalar_count, first_argument);
-    handle_output_arguments(registers, output_scalar_count, next_arguments ...);
+    output_scalar_count = handle_output_argument(
+        registers, output_scalar_count, std::forward<FirstArgumentType>(first_argument));
+    handle_output_arguments(registers, output_scalar_count, std::forward<NextArgumentTypes>(next_arguments) ...);
   }
   template <class ScalarType, class LastArgumentType>
   P3A_HOST P3A_DEVICE P3A_ALWAYS_INLINE
   inline void handle_output_arguments(
       ScalarType* registers,
       int output_scalar_count,
-      LastArgumentType last_argument) const
+      LastArgumentType&& last_argument) const
   {
-    handle_output_argument(registers, output_scalar_count, last_argument);
+    handle_output_argument(registers, output_scalar_count, std::forward<LastArgumentType>(last_argument));
   }
   template <class ScalarType, class NotOutputType>
   P3A_HOST P3A_DEVICE P3A_ALWAYS_INLINE
   inline int handle_output_argument(
       ScalarType* registers,
       int output_scalar_count,
-      NotOutputType argument) const
+      NotOutputType&& argument) const
   {
     return output_scalar_count;
   }
@@ -350,7 +361,7 @@ class executable_function {
   inline int handle_output_argument(
       ScalarType* registers,
       int output_scalar_count,
-      ScalarType (&argument) [N])
+      ScalarType (&argument) [N]) const
   {
     for (std::size_t i = 0; i < N; ++i) {
       int const output_register = output_registers[output_scalar_count];
@@ -371,7 +382,7 @@ template <
   class ExecutionPolicy>
 class compiled_function {
  public:
-  using instructions_type = p3a::dynamic_array<::rtc::instruction, Allocator, ExecutionPolicy>;
+  using instructions_type = p3a::dynamic_array<::math_bytecode::instruction, Allocator, ExecutionPolicy>;
   using registers_type = p3a::dynamic_array<int, typename Allocator::template rebind<int>::other, ExecutionPolicy>;
   compiled_function(
       std::vector<instruction> const& instructions_in,

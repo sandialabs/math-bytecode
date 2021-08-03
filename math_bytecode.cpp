@@ -1,4 +1,4 @@
-#include "runtime_compiler.hpp"
+#include "math_bytecode.hpp"
 
 #include "parsegen_language.hpp"
 #include "parsegen_reader.hpp"
@@ -7,7 +7,7 @@
 
 #include <iostream>
 
-namespace rtc {
+namespace math_bytecode {
 
 enum token : std::size_t {
   token_integer,
@@ -606,7 +606,7 @@ class reader : public parsegen::reader
   reader(bool verbose)
     :parsegen::reader(
         parsegen::build_reader_tables(
-          rtc::build_language()))
+          math_bytecode::build_language()))
     ,is_verbose(verbose)
   {
   }
@@ -1066,9 +1066,9 @@ host_function compile(
     std::string const& source_code,
     bool verbose)
 {
-  rtc::reader reader(verbose);
+  math_bytecode::reader reader(verbose);
   reader.read_string(
-    rtc::remove_leading_space(source_code),
+    math_bytecode::remove_leading_space(source_code),
     "runtime math function");
   return reader.get_function();
 }

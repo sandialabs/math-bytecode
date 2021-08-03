@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.12.0...3.18.0)
 
-project(rtc VERSION 1.0.0 LANGUAGES CXX)
+project(math-bytecode VERSION 1.0.0 LANGUAGES CXX)
 
 if(WIN32 AND NOT CYGWIN)
   set(INSTALL_CMAKE_DIR CMake)
@@ -14,35 +14,35 @@ find_package(MPI REQUIRED)
 
 if (p3a_ENABLE_CUDA)
   enable_language(CUDA)
-  set_source_files_properties(runtime_compiler.cpp PROPERTIES LANGUAGE CUDA)
+  set_source_files_properties(math_bytecode.cpp PROPERTIES LANGUAGE CUDA)
 endif()
 
 if (p3a_ENABLE_HIP)
   find_package(hip REQUIRED)
 endif()
 
-add_library(runtime-compiler runtime_compiler.cpp)
+add_library(math-bytecode math_bytecode.cpp)
 
-target_compile_features(runtime-compiler PUBLIC cxx_std_17)
+target_compile_features(math-bytecode PUBLIC cxx_std_17)
 
-set_target_properties(runtime-compiler PROPERTIES
-  PUBLIC_HEADER runtime_compiler.hpp
-  OUTPUT_NAME runtime_compiler)
-target_include_directories(runtime-compiler
+set_target_properties(math-bytecode PROPERTIES
+  PUBLIC_HEADER math_bytecode.hpp
+  OUTPUT_NAME math_bytecode)
+target_include_directories(math-bytecode
   INTERFACE $<INSTALL_INTERFACE:include>)
 
-target_link_libraries(runtime-compiler PRIVATE parsegen)
-target_link_libraries(runtime-compiler PUBLIC p3a)
+target_link_libraries(math-bytecode PRIVATE parsegen)
+target_link_libraries(math-bytecode PUBLIC p3a)
 
-install(TARGETS runtime-compiler EXPORT rtc-targets)
+install(TARGETS math-bytecode EXPORT math-bytecode-targets)
 
-configure_file(rtc-config.cmake.in
-  "${PROJECT_BINARY_DIR}/rtc-config.cmake" @ONLY)
-configure_file(rtc-config-version.cmake.in
-  "${PROJECT_BINARY_DIR}/rtc-config-version.cmake" @ONLY)
+configure_file(math-bytecode-config.cmake.in
+  "${PROJECT_BINARY_DIR}/math-bytecode-config.cmake" @ONLY)
+configure_file(math-bytecode-config-version.cmake.in
+  "${PROJECT_BINARY_DIR}/math-bytecode-config-version.cmake" @ONLY)
 install(FILES
-  "${PROJECT_BINARY_DIR}/rtc-config.cmake"
-  "${PROJECT_BINARY_DIR}/rtc-config-version.cmake"
+  "${PROJECT_BINARY_DIR}/math-bytecode-config.cmake"
+  "${PROJECT_BINARY_DIR}/math-bytecode-config-version.cmake"
   DESTINATION "${INSTALL_CMAKE_DIR}")
-install(EXPORT rtc-targets
+install(EXPORT math-bytecode-targets
   DESTINATION "${INSTALL_CMAKE_DIR}")
