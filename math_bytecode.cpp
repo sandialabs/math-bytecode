@@ -1,4 +1,4 @@
-#include "runtime_compiler.hpp"
+#include "math_bytecode.hpp"
 
 #include "parsegen_language.hpp"
 #include "parsegen_reader.hpp"
@@ -7,7 +7,7 @@
 
 #include <iostream>
 
-namespace rtc {
+namespace math_bytecode {
 
 enum token : std::size_t {
   token_integer,
@@ -18,11 +18,14 @@ enum token : std::size_t {
   token_divide,
   token_raise,
   token_assign,
-  token_open_subexpression,
-  token_close_subexpression,
+  token_open_parens,
+  token_close_parens,
   token_open_array,
   token_close_array,
   token_double,
+  token_const,
+  token_reference,
+  token_void,
   token_if,
   token_else,
   token_identifier,
@@ -50,6 +53,14 @@ enum production : std::size_t {
   production_declare_assign,
   production_declare_scalar,
   production_declare_array,
+  production_define_function,
+  production_function_signature,
+  production_first_parameter,
+  production_next_parameter,
+  production_input_scalar_parameter,
+  production_output_scalar_parameter,
+  production_input_array_parameter,
+  production_output_array_parameter,
   production_if,
   production_if_else,
   production_if_header,
@@ -57,6 +68,7 @@ enum production : std::size_t {
   production_variable,
   production_array_entry,
   production_type_double,
+  production_type_const_double,
   production_sum_or_difference,
   production_product_or_quotient,
   production_decay_to_negation,
@@ -105,11 +117,14 @@ parsegen::language build_language() {
   l.tokens[token_divide] = {"divide", "/" + space_regex};
   l.tokens[token_raise] = {"raise", "\\^" + space_regex};
   l.tokens[token_assign] = {"assign", "=" + space_regex};
-  l.tokens[token_open_subexpression] = {"open_subexpression", "\\(" + space_regex};
-  l.tokens[token_close_subexpression] = {"close_subexpression", "\\)" + space_regex};
+  l.tokens[token_open_parens] = {"open_parens", "\\(" + space_regex};
+  l.tokens[token_close_parens] = {"close_parens", "\\)" + space_regex};
   l.tokens[token_open_array] = {"open_array", "\\[" + space_regex};
   l.tokens[token_close_array] = {"close_array", "\\]" + space_regex};
   l.tokens[token_double] = {"double", "double" + space_regex};
+  l.tokens[token_const] = {"const", "const" + space_regex};
+  l.tokens[token_reference] = {"reference", "&" + space_regex};
+  l.tokens[token_void] = {"void", "void" + space_regex};
   l.tokens[token_if] = {"if", "if" + space_regex};
   l.tokens[token_else] = {"else", "else" + space_regex};
   l.tokens[token_identifier] = {"identifier", "[_A-Za-z][_A-Za-z0-9]*" + space_regex};
@@ -128,7 +143,7 @@ parsegen::language build_language() {
   l.tokens[token_greater_or_equal] = {"greater_or_equal", ">=" + space_regex};
   l.productions.resize(production_count);
   l.productions[production_program] =
-  {"program", {"statements"}};
+  {"program", {"function_definition"}};
   l.productions[production_first_statement] =
   {"statements", {"statement"}};
   l.productions[production_next_statement] =
@@ -141,12 +156,28 @@ parsegen::language build_language() {
   {"statement", {"type", "identifier", "statement_end"}};
   l.productions[production_declare_array] =
   {"statement", {"type", "identifier", "open_array", "integer", "close_array", "statement_end"}};
+  l.productions[production_define_function] =
+  {"function_definition", {"function_signature", "block"}};
+  l.productions[production_function_signature] =
+  {"function_signature", {"void", "identifier", "open_parens", "parameters", "close_parens"}};
+  l.productions[production_first_parameter] =
+  {"parameters", {"parameter"}};
+  l.productions[production_next_parameter] =
+  {"parameters", {"parameters", "argument_separator", "parameter"}};
+  l.productions[production_input_scalar_parameter] =
+  {"parameter", {"const", "double", "identifier"}};
+  l.productions[production_output_scalar_parameter] =
+  {"parameter", {"double", "reference", "identifier"}};
+  l.productions[production_input_array_parameter] =
+  {"parameter", {"const", "double", "identifier", "open_array", "integer", "close_array"}};
+  l.productions[production_output_array_parameter] =
+  {"parameter", {"double", "identifier", "open_array", "integer", "close_array"}};
   l.productions[production_if] =
   {"statement", {"if_header", "block"}};
   l.productions[production_if_else] =
   {"statement", {"if_header", "block", "else", "block"}};
   l.productions[production_if_header] =
-  {"if_header", {"if", "open_subexpression", "boolean_immutable", "close_subexpression"}};
+  {"if_header", {"if", "open_parens", "boolean_immutable", "close_parens"}};
   l.productions[production_block] =
   {"block", {"open_block", "statements", "close_block"}};
   l.productions[production_variable] =
@@ -155,6 +186,8 @@ parsegen::language build_language() {
   {"mutable", {"identifier", "open_array", "integer", "close_array"}};
   l.productions[production_type_double] =
   {"type", {"double"}};
+  l.productions[production_type_const_double] =
+  {"type", {"const", "double"}};
   l.productions[production_sum_or_difference] =
   {"immutable", {"sum_or_difference"}};
   l.productions[production_product_or_quotient] =
@@ -168,11 +201,11 @@ parsegen::language build_language() {
   l.productions[production_read] =
   {"leaf", {"mutable"}};
   l.productions[production_subexpression] =
-  {"leaf", {"open_subexpression", "immutable", "close_subexpression"}};
+  {"leaf", {"open_parens", "immutable", "close_parens"}};
   l.productions[production_unary_call] =
-  {"leaf", {"identifier", "open_subexpression", "immutable", "close_subexpression"}};
+  {"leaf", {"identifier", "open_parens", "immutable", "close_parens"}};
   l.productions[production_binary_call] =
-  {"leaf", {"identifier", "open_subexpression", "immutable", "argument_separator", "immutable", "close_subexpression"}};
+  {"leaf", {"identifier", "open_parens", "immutable", "argument_separator", "immutable", "close_parens"}};
   l.productions[production_sum] =
   {"sum_or_difference", {"sum_or_difference", "plus", "product_or_quotient"}};
   l.productions[production_difference] =
@@ -570,15 +603,10 @@ instruction_code binary_operator_code(int p)
 class reader : public parsegen::reader
 {
  public:
-  reader(
-      std::vector<std::string> const& input_variable_names_in,
-      std::vector<std::string> const& output_variable_names_in,
-      bool verbose = false)
+  reader(bool verbose)
     :parsegen::reader(
         parsegen::build_reader_tables(
-          rtc::build_language()))
-    ,input_variable_names(input_variable_names_in)
-    ,output_variable_names(output_variable_names_in)
+          math_bytecode::build_language()))
     ,is_verbose(verbose)
   {
   }
@@ -626,12 +654,40 @@ class reader : public parsegen::reader
         }
         lookup_registers();
         if (is_verbose) {
-          for (auto& pair : input_registers) {
-            std::cout << "input variable " << pair.first << " at register " << pair.second << '\n';
+          for (std::size_t i = 0; i < input_registers.size(); ++i) {
+            std::cout << "input variable " << input_variable_names[i] << " at register " << input_registers[i] << '\n';
           }
-          for (auto& pair : output_registers) {
-            std::cout << "output variable " << pair.first << " at register " << pair.second << '\n';
+          for (std::size_t i = 0; i < output_registers.size(); ++i) {
+            std::cout << "output variable " << output_variable_names[i] << " at register " << output_registers[i] << '\n';
           }
+        }
+        break;
+      }
+      case production_input_scalar_parameter:
+      {
+        input_variable_names.push_back(std::any_cast<std::string&&>(std::move(rhs.at(2))));
+        break;
+      }
+      case production_output_scalar_parameter:
+      {
+        output_variable_names.push_back(std::any_cast<std::string&&>(std::move(rhs.at(2))));
+        break;
+      }
+      case production_input_array_parameter:
+      {
+        int const n = std::any_cast<int>(rhs.at(4));
+        std::string const name(std::any_cast<std::string&&>(std::move(rhs.at(2))));
+        for (int i = 0; i < n; ++i) {
+          input_variable_names.push_back(name + "[" + std::to_string(i) + "]");
+        }
+        break;
+      }
+      case production_output_array_parameter:
+      {
+        int const n = std::any_cast<int>(rhs.at(3));
+        std::string const name(std::any_cast<std::string&&>(std::move(rhs.at(1))));
+        for (int i = 0; i < n; ++i) {
+          output_variable_names.push_back(name + "[" + std::to_string(i) + "]");
         }
         break;
       }
@@ -809,9 +865,9 @@ class reader : public parsegen::reader
     }
     return std::any();
   }
-  host_program get_program()
+  host_function get_function()
   {
-    return host_program(
+    return host_function(
         std::move(instructions),
         std::move(input_registers),
         std::move(output_registers),
@@ -979,15 +1035,17 @@ class reader : public parsegen::reader
         return lr.register_assigned;
       }
     }
-    return -1;
+    throw parsegen::parse_error(
+        "function does not set required output variable" +
+        name);
   }
   void lookup_registers()
   {
     for (auto& input_name : input_variable_names) {
-      input_registers[input_name] = get_input_register(input_name);
+      input_registers.push_back(get_input_register(input_name));
     }
     for (auto& output_name : output_variable_names) {
-      output_registers[output_name] = get_output_register(output_name);
+      output_registers.push_back(get_output_register(output_name));
     }
   }
   int next_temporary{0};
@@ -997,25 +1055,22 @@ class reader : public parsegen::reader
   int register_count{0};
   std::vector<std::string> input_variable_names;
   std::vector<std::string> output_variable_names;
-  std::map<std::string, int> input_registers;
-  std::map<std::string, int> output_registers;
+  std::vector<int> input_registers;
+  std::vector<int> output_registers;
   std::string condition_name;
   bool is_inside_conditional{false};
   bool is_verbose;
 };
 
-host_program compile(
+host_function compile(
     std::string const& source_code,
-    std::vector<std::string> const& input_variables,
-    std::vector<std::string> const& output_variables,
-    std::string const& program_name,
     bool verbose)
 {
-  rtc::reader reader(input_variables, output_variables, verbose);
+  math_bytecode::reader reader(verbose);
   reader.read_string(
-    rtc::remove_leading_space(source_code),
-    program_name);
-  return reader.get_program();
+    math_bytecode::remove_leading_space(source_code),
+    "runtime math function");
+  return reader.get_function();
 }
 
 }
