@@ -7,6 +7,7 @@
 
 #include "p3a_macros.hpp"
 #include "p3a_dynamic_array.hpp"
+#include "p3a_quantity.hpp"
 
 namespace math_bytecode {
 
@@ -273,7 +274,7 @@ class executable_function {
   inline int handle_input_argument(
       ScalarType* registers,
       int input_scalar_count,
-      NotInputType argument) const
+      NotInputType&& argument) const
   {
     return input_scalar_count;
   }
@@ -312,6 +313,34 @@ class executable_function {
       ScalarType* registers,
       int input_scalar_count,
       ScalarType (&argument) [N]) const
+  {
+    return input_scalar_count;
+  }
+  template <class ScalarType, class Dimension>
+  P3A_HOST P3A_DEVICE P3A_ALWAYS_INLINE
+  inline int handle_input_argument(
+      ScalarType* registers,
+      int input_scalar_count,
+      const p3a::quantity<ScalarType, Dimension>& argument) const
+  {
+    return handle_input_argument(registers, input_scalar_count, argument.value());
+  }
+  template <class ScalarType, class Dimension>
+  P3A_HOST P3A_DEVICE P3A_ALWAYS_INLINE
+  inline int handle_input_argument(
+      ScalarType* registers,
+      int input_scalar_count,
+      const p3a::vector3<p3a::quantity<ScalarType, Dimension>>& argument) const
+  {
+    const double values[3] = {argument.x().value(), argument.y().value(), argument.z().value()};
+    return handle_input_argument(registers, input_scalar_count, values);
+  }
+  template <class ScalarType, class Dimension>
+  P3A_HOST P3A_DEVICE P3A_ALWAYS_INLINE
+  inline int handle_input_argument(
+      ScalarType* registers,
+      int input_scalar_count,
+      p3a::vector3<p3a::quantity<ScalarType, Dimension>>& argument) const
   {
     return input_scalar_count;
   }
@@ -368,6 +397,29 @@ class executable_function {
       argument[i] = registers[output_register];
       ++output_scalar_count;
     }
+    return output_scalar_count;
+  }
+  template <class ScalarType, class Dimension>
+  P3A_HOST P3A_DEVICE P3A_ALWAYS_INLINE
+  inline int handle_output_argument(
+      ScalarType* registers,
+      int output_scalar_count,
+      p3a::quantity<ScalarType, Dimension>& argument) const
+  {
+    return handle_output_argument(registers, output_scalar_count, argument.value());
+  }
+  template <class ScalarType, class Dimension>
+  P3A_HOST P3A_DEVICE P3A_ALWAYS_INLINE
+  inline int handle_output_argument(
+      ScalarType* registers,
+      int output_scalar_count,
+      p3a::vector3<p3a::quantity<ScalarType, Dimension>>& argument) const
+  {
+    double values[3];
+    output_scalar_count = handle_output_argument(registers, output_scalar_count, values);
+    argument.x() = values[0];
+    argument.y() = values[1];
+    argument.z() = values[2];
     return output_scalar_count;
   }
  private:
