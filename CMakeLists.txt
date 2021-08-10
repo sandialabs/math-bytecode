@@ -12,15 +12,13 @@ find_package(parsegen REQUIRED)
 find_package(p3a REQUIRED)
 find_package(MPI REQUIRED)
 
-if (p3a_ENABLE_CUDA)
-  enable_language(CUDA)
-  set_source_files_properties(math_bytecode.cpp PROPERTIES LANGUAGE CUDA)
-endif()
+enable_language(${p3a_LANGUAGE})
 
 if (p3a_ENABLE_HIP)
   find_package(hip REQUIRED)
 endif()
 
+set_source_files_properties(math_bytecode.cpp PROPERTIES LANGUAGE ${p3a_LANGUAGE})
 add_library(math-bytecode math_bytecode.cpp)
 
 target_compile_features(math-bytecode PUBLIC cxx_std_17)
