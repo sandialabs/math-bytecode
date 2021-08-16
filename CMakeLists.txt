@@ -10,7 +10,6 @@ endif()
 
 find_package(parsegen REQUIRED)
 find_package(p3a REQUIRED)
-find_package(MPI REQUIRED)
 
 enable_language(${p3a_LANGUAGE})
 
