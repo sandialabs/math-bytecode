@@ -1,0 +1,9 @@
+@PACKAGE_INIT@
+
+include("${CMAKE_CURRENT_LIST_DIR}/math-bytecode-targets.cmake")
+
+check_required_components(math-bytecode)
+
+include(CMakeFindDependencyMacro)
+find_dependency(parsegen)
+find_dependency(p3a)

@@ -2,11 +2,8 @@ cmake_minimum_required(VERSION 3.12.0...3.18.0)
 
 project(math-bytecode VERSION 1.0.0 LANGUAGES CXX)
 
-if(WIN32 AND NOT CYGWIN)
-  set(INSTALL_CMAKE_DIR CMake)
-else()
-  set(INSTALL_CMAKE_DIR lib/cmake/${PROJECT_NAME})
-endif()
+include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
 
 find_package(parsegen REQUIRED)
 find_package(p3a REQUIRED)
@@ -21,19 +18,29 @@ set_target_properties(math-bytecode PROPERTIES
   PUBLIC_HEADER math_bytecode.hpp
   OUTPUT_NAME math_bytecode)
 target_include_directories(math-bytecode
-  INTERFACE $<INSTALL_INTERFACE:include>)
+  PUBLIC
+  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>"
+  "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>")
 target_link_libraries(math-bytecode PRIVATE parsegen::parsegen)
 target_link_libraries(math-bytecode PUBLIC p3a::p3a)
 
 install(TARGETS math-bytecode EXPORT math-bytecode-targets)
 
-configure_file(math-bytecode-config.cmake.in
-  "${PROJECT_BINARY_DIR}/math-bytecode-config.cmake" @ONLY)
-configure_file(math-bytecode-config-version.cmake.in
-  "${PROJECT_BINARY_DIR}/math-bytecode-config-version.cmake" @ONLY)
+configure_package_config_file(
+  "${CMAKE_CURRENT_SOURCE_DIR}/config.cmake.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/math-bytecode-config.cmake"
+  INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/math-bytecode
+)
+write_basic_package_version_file(
+  "${PROJECT_BINARY_DIR}/math-bytecode-config-version.cmake"
+  COMPATIBILITY AnyNewerVersion)
+
 install(FILES
   "${PROJECT_BINARY_DIR}/math-bytecode-config.cmake"
   "${PROJECT_BINARY_DIR}/math-bytecode-config-version.cmake"
-  DESTINATION "${INSTALL_CMAKE_DIR}")
-install(EXPORT math-bytecode-targets
-  DESTINATION "${INSTALL_CMAKE_DIR}")
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/math-bytecode)
+
+install(
+  EXPORT math-bytecode-targets
+  NAMESPACE math-bytecode::
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/math-bytecode)
