@@ -22,7 +22,7 @@ set_target_properties(math-bytecode PROPERTIES
   OUTPUT_NAME math_bytecode)
 target_include_directories(math-bytecode
   INTERFACE $<INSTALL_INTERFACE:include>)
-target_link_libraries(math-bytecode PRIVATE parsegen)
+target_link_libraries(math-bytecode PRIVATE parsegen::parsegen)
 target_link_libraries(math-bytecode PUBLIC p3a::p3a)
 
 install(TARGETS math-bytecode EXPORT math-bytecode-targets)
