@@ -1,7 +1,6 @@
 #include "math_bytecode.hpp"
 
-#include "parsegen_language.hpp"
-#include "parsegen_reader.hpp"
+#include "parsegen.hpp"
 
 #include <algorithm>
 
@@ -600,17 +599,17 @@ instruction_code binary_operator_code(int p)
   throw parsegen::parse_error("BUG: unexpected binary production");
 }
 
-class reader : public parsegen::reader
+class parser : public parsegen::parser
 {
  public:
-  reader(bool verbose)
-    :parsegen::reader(
-        parsegen::build_reader_tables(
+  parser(bool verbose)
+    :parsegen::parser(
+        parsegen::build_parser_tables(
           math_bytecode::build_language()))
     ,is_verbose(verbose)
   {
   }
-  virtual std::any at_shift(int token, std::string& text) override
+  virtual std::any shift(int token, std::string& text) override
   {
     switch (token) {
       case token_identifier: return remove_trailing_space(std::move(text));
@@ -628,7 +627,7 @@ class reader : public parsegen::reader
     }
     return std::any();
   }
-  virtual std::any at_reduce(
+  virtual std::any reduce(
       int production, std::vector<std::any>& rhs) override
   {
     switch (production) {
@@ -1066,11 +1065,11 @@ host_function compile(
     std::string const& source_code,
     bool verbose)
 {
-  math_bytecode::reader reader(verbose);
-  reader.read_string(
+  math_bytecode::parser parser(verbose);
+  parser.read_string(
     math_bytecode::remove_leading_space(source_code),
     "runtime math function");
-  return reader.get_function();
+  return parser.get_function();
 }
 
 }
