@@ -1066,7 +1066,7 @@ host_function compile(
     bool verbose)
 {
   math_bytecode::parser parser(verbose);
-  parser.read_string(
+  parser.parse_string(
     math_bytecode::remove_leading_space(source_code),
     "runtime math function");
   return parser.get_function();
