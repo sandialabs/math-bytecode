@@ -52,7 +52,7 @@ class instruction {
   inline void execute(ScalarType* registers) const;
 };
 
-  template <class ScalarType>
+template <class ScalarType>
 P3A_HOST P3A_DEVICE P3A_ALWAYS_INLINE
 inline void instruction::execute(ScalarType* registers) const {
   switch (this->code) {
@@ -104,112 +104,131 @@ inline void instruction::execute(ScalarType* registers) const {
     case instruction_code::sqrt:
     {
       registers[this->result_register] =
-        std::sqrt(registers[this->input_registers.left]);
+        p3a::square_root(registers[this->input_registers.left]);
       break;
     }
     case instruction_code::sin:
     {
       registers[this->result_register] =
-        std::sin(registers[this->input_registers.left]);
+        p3a::sine(registers[this->input_registers.left]);
       break;
     }
     case instruction_code::cos:
     {
       registers[this->result_register] =
-        std::cos(registers[this->input_registers.left]);
+        p3a::cosine(registers[this->input_registers.left]);
       break;
     }
     case instruction_code::exp:
     {
       registers[this->result_register] =
-        std::exp(registers[this->input_registers.left]);
+        p3a::natural_exponential(registers[this->input_registers.left]);
       break;
     }
     case instruction_code::pow:
     {
       registers[this->result_register] =
-        std::pow(
+        p3a::exponentiate(
             registers[this->input_registers.left],
             registers[this->input_registers.right]);
       break;
     }
     case instruction_code::conditional_copy:
     {
-      if (registers[this->input_registers.left] != 0.0) {
-        registers[this->result_register] =
-          registers[this->input_registers.right];
-      }
+      registers[this->result_register] =
+        p3a::condition(
+            registers[this->input_registers.left] != ScalarType(0.0),
+            registers[this->input_registers.right],
+            registers[this->result_register]);
       break;
     }
     case instruction_code::logical_or:
     {
       registers[this->result_register] =
-        ((registers[this->input_registers.left] != 0.0) ||
-         (registers[this->input_registers.right] != 0.0))
-        ? 1.0 : 0.0;
+        p3a::condition(
+            (registers[this->input_registers.left] != ScalarType(0.0)) ||
+            (registers[this->input_registers.right] != ScalarType(0.0)),
+            ScalarType(1.0),
+            ScalarType(0.0));
       break;
     }
     case instruction_code::logical_and:
     {
       registers[this->result_register] =
-        ((registers[this->input_registers.left] != 0.0) &&
-         (registers[this->input_registers.right] != 0.0))
-        ? 1.0 : 0.0;
+        p3a::condition(
+            (registers[this->input_registers.left] != ScalarType(0.0)) &&
+            (registers[this->input_registers.right] != ScalarType(0.0)),
+            ScalarType(1.0),
+            ScalarType(0.0));
       break;
     }
     case instruction_code::logical_not:
     {
       registers[this->result_register] =
-        (registers[this->input_registers.left] != 0.0)
-        ? 0.0 : 1.0;
+        p3a::condition(
+            registers[this->input_registers.left] != ScalarType(0.0),
+            ScalarType(0.0),
+            ScalarType(1.0));
       break;
     }
     case instruction_code::equal:
     {
       registers[this->result_register] =
-        (registers[this->input_registers.left] ==
-         registers[this->input_registers.right])
-        ? 1.0 : 0.0;
+        p3a::condition(
+            registers[this->input_registers.left] ==
+            registers[this->input_registers.right],
+            ScalarType(1.0),
+            ScalarType(0.0));
       break;
     }
     case instruction_code::not_equal:
     {
       registers[this->result_register] =
-        (registers[this->input_registers.left] !=
-         registers[this->input_registers.right])
-        ? 1.0 : 0.0;
+        p3a::condition(
+            registers[this->input_registers.left] !=
+            registers[this->input_registers.right],
+            ScalarType(1.0),
+            ScalarType(0.0));
       break;
     }
     case instruction_code::less:
     {
       registers[this->result_register] =
-        (registers[this->input_registers.left] <
-         registers[this->input_registers.right])
-        ? 1.0 : 0.0;
+        p3a::condition(
+            registers[this->input_registers.left] <
+            registers[this->input_registers.right],
+            ScalarType(1.0),
+            ScalarType(0.0));
       break;
     }
     case instruction_code::less_or_equal:
     {
       registers[this->result_register] =
-        (registers[this->input_registers.left] <=
-         registers[this->input_registers.right])
-        ? 1.0 : 0.0;
+        p3a::condition(
+            registers[this->input_registers.left] <=
+            registers[this->input_registers.right],
+            ScalarType(1.0),
+            ScalarType(0.0));
       break;
     }
     case instruction_code::greater:
     {
       registers[this->result_register] =
-        (registers[this->input_registers.left] >
-         registers[this->input_registers.right])
-        ? 1.0 : 0.0;
+        p3a::condition(
+            registers[this->input_registers.left] >
+            registers[this->input_registers.right],
+            ScalarType(1.0),
+            ScalarType(0.0));
       break;
     }
     case instruction_code::greater_or_equal:
     {
       registers[this->result_register] =
-        (registers[this->input_registers.left] >=
-         registers[this->input_registers.right])
-        ? 1.0 : 0.0;
+        p3a::condition(
+            registers[this->input_registers.left] >=
+            registers[this->input_registers.right],
+            ScalarType(1.0),
+            ScalarType(0.0));
       break;
     }
   }
@@ -217,6 +236,7 @@ inline void instruction::execute(ScalarType* registers) const {
 
 class executable_function {
  public:
+  P3A_ALWAYS_INLINE executable_function() = default;
   executable_function(
       instruction const* instructions_in,
       int instruction_count_in,
@@ -330,9 +350,9 @@ class executable_function {
   inline int handle_input_argument(
       ScalarType* registers,
       int input_scalar_count,
-      const p3a::vector3<p3a::quantity<ScalarType, Dimension>>& argument) const
+      p3a::vector3<p3a::quantity<ScalarType, Dimension>> const& argument) const
   {
-    const double values[3] = {argument.x().value(), argument.y().value(), argument.z().value()};
+    ScalarType const values[3] = {argument.x().value(), argument.y().value(), argument.z().value()};
     return handle_input_argument(registers, input_scalar_count, values);
   }
   template <class ScalarType, class Dimension>
@@ -415,7 +435,7 @@ class executable_function {
       int output_scalar_count,
       p3a::vector3<p3a::quantity<ScalarType, Dimension>>& argument) const
   {
-    double values[3];
+    ScalarType values[3];
     output_scalar_count = handle_output_argument(registers, output_scalar_count, values);
     argument.x() = values[0];
     argument.y() = values[1];
