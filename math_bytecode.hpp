@@ -437,9 +437,9 @@ class executable_function {
   {
     ScalarType values[3];
     output_scalar_count = handle_output_argument(registers, output_scalar_count, values);
-    argument.x() = values[0];
-    argument.y() = values[1];
-    argument.z() = values[2];
+    argument.x() = p3a::quantity<Unit, ScalarType, Origin>(values[0]);
+    argument.y() = p3a::quantity<Unit, ScalarType, Origin>(values[1]);
+    argument.z() = p3a::quantity<Unit, ScalarType, Origin>(values[2]);
     return output_scalar_count;
   }
  private:
