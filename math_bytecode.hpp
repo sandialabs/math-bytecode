@@ -336,31 +336,31 @@ class executable_function {
   {
     return input_scalar_count;
   }
-  template <class ScalarType, class Dimension>
+  template <class ScalarType, class Unit, class Origin>
   P3A_HOST P3A_DEVICE P3A_ALWAYS_INLINE
   inline int handle_input_argument(
       ScalarType* registers,
       int input_scalar_count,
-      const p3a::quantity<ScalarType, Dimension>& argument) const
+      const p3a::quantity<Unit, ScalarType, Origin>& argument) const
   {
     return handle_input_argument(registers, input_scalar_count, argument.value());
   }
-  template <class ScalarType, class Dimension>
+  template <class ScalarType, class Unit, class Origin>
   P3A_HOST P3A_DEVICE P3A_ALWAYS_INLINE
   inline int handle_input_argument(
       ScalarType* registers,
       int input_scalar_count,
-      p3a::vector3<p3a::quantity<ScalarType, Dimension>> const& argument) const
+      p3a::vector3<p3a::quantity<Unit, ScalarType, Origin>> const& argument) const
   {
     ScalarType const values[3] = {argument.x().value(), argument.y().value(), argument.z().value()};
     return handle_input_argument(registers, input_scalar_count, values);
   }
-  template <class ScalarType, class Dimension>
+  template <class ScalarType, class Unit, class Origin>
   P3A_HOST P3A_DEVICE P3A_ALWAYS_INLINE
   inline int handle_input_argument(
       ScalarType* registers,
       int input_scalar_count,
-      p3a::vector3<p3a::quantity<ScalarType, Dimension>>& argument) const
+      p3a::vector3<p3a::quantity<Unit, ScalarType, Origin>>& argument) const
   {
     return input_scalar_count;
   }
@@ -419,21 +419,21 @@ class executable_function {
     }
     return output_scalar_count;
   }
-  template <class ScalarType, class Dimension>
+  template <class ScalarType, class Unit, class Origin>
   P3A_HOST P3A_DEVICE P3A_ALWAYS_INLINE
   inline int handle_output_argument(
       ScalarType* registers,
       int output_scalar_count,
-      p3a::quantity<ScalarType, Dimension>& argument) const
+      p3a::quantity<Unit, ScalarType, Origin>& argument) const
   {
     return handle_output_argument(registers, output_scalar_count, argument.value());
   }
-  template <class ScalarType, class Dimension>
+  template <class ScalarType, class Unit, class Origin>
   P3A_HOST P3A_DEVICE P3A_ALWAYS_INLINE
   inline int handle_output_argument(
       ScalarType* registers,
       int output_scalar_count,
-      p3a::vector3<p3a::quantity<ScalarType, Dimension>>& argument) const
+      p3a::vector3<p3a::quantity<Unit, ScalarType, Origin>>& argument) const
   {
     ScalarType values[3];
     output_scalar_count = handle_output_argument(registers, output_scalar_count, values);
