@@ -48,12 +48,12 @@ class instruction {
     double constant;
   };
   template <class ScalarType>
-  P3A_HOST P3A_DEVICE P3A_ALWAYS_INLINE
+  P3A_HOST_DEVICE P3A_ALWAYS_INLINE
   inline void execute(ScalarType* registers) const;
 };
 
 template <class ScalarType>
-P3A_HOST P3A_DEVICE P3A_ALWAYS_INLINE
+P3A_HOST_DEVICE P3A_ALWAYS_INLINE
 inline void instruction::execute(ScalarType* registers) const {
   switch (this->code) {
     case instruction_code::copy:
@@ -251,7 +251,7 @@ class executable_function {
   {
   }
   template <class ScalarType>
-  P3A_HOST P3A_DEVICE P3A_ALWAYS_INLINE
+  P3A_HOST_DEVICE P3A_ALWAYS_INLINE
   inline void execute(ScalarType* registers) const
   {
     for (int i = 0; i < instruction_count; ++i) {
@@ -259,7 +259,7 @@ class executable_function {
     }
   }
   template <class ScalarType, class ... ArgumentTypes>
-  P3A_HOST P3A_DEVICE P3A_ALWAYS_INLINE
+  P3A_HOST_DEVICE P3A_ALWAYS_INLINE
   inline void operator()(
       ScalarType* registers,
       ArgumentTypes&& ... arguments) const
@@ -269,7 +269,7 @@ class executable_function {
     handle_output_arguments(registers, 0, std::forward<ArgumentTypes>(arguments) ...);
   }
   template <class ScalarType, class FirstArgumentType, class ... NextArgumentTypes>
-  P3A_HOST P3A_DEVICE P3A_ALWAYS_INLINE
+  P3A_HOST_DEVICE P3A_ALWAYS_INLINE
   inline void handle_input_arguments(
       ScalarType* registers,
       int input_scalar_count,
@@ -281,7 +281,7 @@ class executable_function {
     handle_input_arguments(registers, input_scalar_count, std::forward<NextArgumentTypes>(next_arguments) ...);
   }
   template <class ScalarType, class LastArgumentType>
-  P3A_HOST P3A_DEVICE P3A_ALWAYS_INLINE
+  P3A_HOST_DEVICE P3A_ALWAYS_INLINE
   inline void handle_input_arguments(
       ScalarType* registers,
       int input_scalar_count,
@@ -290,7 +290,7 @@ class executable_function {
     handle_input_argument(registers, input_scalar_count, std::forward<LastArgumentType>(last_argument));
   }
   template <class ScalarType, class NotInputType>
-  P3A_HOST P3A_DEVICE P3A_ALWAYS_INLINE
+  P3A_HOST_DEVICE P3A_ALWAYS_INLINE
   inline int handle_input_argument(
       ScalarType* registers,
       int input_scalar_count,
@@ -299,7 +299,7 @@ class executable_function {
     return input_scalar_count;
   }
   template <class ScalarType>
-  P3A_HOST P3A_DEVICE P3A_ALWAYS_INLINE
+  P3A_HOST_DEVICE P3A_ALWAYS_INLINE
   inline int handle_input_argument(
       ScalarType* registers,
       int input_scalar_count,
@@ -312,7 +312,7 @@ class executable_function {
     return input_scalar_count + 1;
   }
   template <class ScalarType, std::size_t N>
-  P3A_HOST P3A_DEVICE P3A_ALWAYS_INLINE
+  P3A_HOST_DEVICE P3A_ALWAYS_INLINE
   inline int handle_input_argument(
       ScalarType* registers,
       int input_scalar_count,
@@ -328,7 +328,7 @@ class executable_function {
     return input_scalar_count;
   }
   template <class ScalarType, std::size_t N>
-  P3A_HOST P3A_DEVICE P3A_ALWAYS_INLINE
+  P3A_HOST_DEVICE P3A_ALWAYS_INLINE
   inline int handle_input_argument(
       ScalarType* registers,
       int input_scalar_count,
@@ -337,7 +337,7 @@ class executable_function {
     return input_scalar_count;
   }
   template <class ScalarType, class Unit, class Origin>
-  P3A_HOST P3A_DEVICE P3A_ALWAYS_INLINE
+  P3A_HOST_DEVICE P3A_ALWAYS_INLINE
   inline int handle_input_argument(
       ScalarType* registers,
       int input_scalar_count,
@@ -346,7 +346,7 @@ class executable_function {
     return handle_input_argument(registers, input_scalar_count, argument.value());
   }
   template <class ScalarType, class Unit, class Origin>
-  P3A_HOST P3A_DEVICE P3A_ALWAYS_INLINE
+  P3A_HOST_DEVICE P3A_ALWAYS_INLINE
   inline int handle_input_argument(
       ScalarType* registers,
       int input_scalar_count,
@@ -356,7 +356,7 @@ class executable_function {
     return handle_input_argument(registers, input_scalar_count, values);
   }
   template <class ScalarType, class Unit, class Origin>
-  P3A_HOST P3A_DEVICE P3A_ALWAYS_INLINE
+  P3A_HOST_DEVICE P3A_ALWAYS_INLINE
   inline int handle_input_argument(
       ScalarType* registers,
       int input_scalar_count,
@@ -365,7 +365,7 @@ class executable_function {
     return input_scalar_count;
   }
   template <class ScalarType, class FirstArgumentType, class ... NextArgumentTypes>
-  P3A_HOST P3A_DEVICE P3A_ALWAYS_INLINE
+  P3A_HOST_DEVICE P3A_ALWAYS_INLINE
   inline void handle_output_arguments(
       ScalarType* registers,
       int output_scalar_count,
@@ -377,7 +377,7 @@ class executable_function {
     handle_output_arguments(registers, output_scalar_count, std::forward<NextArgumentTypes>(next_arguments) ...);
   }
   template <class ScalarType, class LastArgumentType>
-  P3A_HOST P3A_DEVICE P3A_ALWAYS_INLINE
+  P3A_HOST_DEVICE P3A_ALWAYS_INLINE
   inline void handle_output_arguments(
       ScalarType* registers,
       int output_scalar_count,
@@ -386,7 +386,7 @@ class executable_function {
     handle_output_argument(registers, output_scalar_count, std::forward<LastArgumentType>(last_argument));
   }
   template <class ScalarType, class NotOutputType>
-  P3A_HOST P3A_DEVICE P3A_ALWAYS_INLINE
+  P3A_HOST_DEVICE P3A_ALWAYS_INLINE
   inline int handle_output_argument(
       ScalarType* registers,
       int output_scalar_count,
@@ -395,7 +395,7 @@ class executable_function {
     return output_scalar_count;
   }
   template <class ScalarType>
-  P3A_HOST P3A_DEVICE P3A_ALWAYS_INLINE
+  P3A_HOST_DEVICE P3A_ALWAYS_INLINE
   inline int handle_output_argument(
       ScalarType* registers,
       int output_scalar_count,
@@ -406,7 +406,7 @@ class executable_function {
     return output_scalar_count + 1;
   }
   template <class ScalarType, std::size_t N>
-  P3A_HOST P3A_DEVICE P3A_ALWAYS_INLINE
+  P3A_HOST_DEVICE P3A_ALWAYS_INLINE
   inline int handle_output_argument(
       ScalarType* registers,
       int output_scalar_count,
@@ -420,7 +420,7 @@ class executable_function {
     return output_scalar_count;
   }
   template <class ScalarType, class Unit, class Origin>
-  P3A_HOST P3A_DEVICE P3A_ALWAYS_INLINE
+  P3A_HOST_DEVICE P3A_ALWAYS_INLINE
   inline int handle_output_argument(
       ScalarType* registers,
       int output_scalar_count,
@@ -429,7 +429,7 @@ class executable_function {
     return handle_output_argument(registers, output_scalar_count, argument.value());
   }
   template <class ScalarType, class Unit, class Origin>
-  P3A_HOST P3A_DEVICE P3A_ALWAYS_INLINE
+  P3A_HOST_DEVICE P3A_ALWAYS_INLINE
   inline int handle_output_argument(
       ScalarType* registers,
       int output_scalar_count,
@@ -529,7 +529,7 @@ class compiled_function {
   int m_register_count;
 };
 
-using host_function = compiled_function<p3a::allocator<instruction>, p3a::serial_local_execution>;
+using host_function = compiled_function<p3a::allocator<instruction>, p3a::host_execution>;
 using device_function = compiled_function<p3a::device_allocator<instruction>, p3a::device_execution>;
 
 [[nodiscard]]
