@@ -529,7 +529,7 @@ class compiled_function {
   int m_register_count;
 };
 
-using host_function = compiled_function<p3a::allocator<instruction>, p3a::host_execution>;
+using host_function = compiled_function<p3a::host_allocator<instruction>, p3a::host_execution>;
 using device_function = compiled_function<p3a::device_allocator<instruction>, p3a::device_execution>;
 
 [[nodiscard]]
