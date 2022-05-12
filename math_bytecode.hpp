@@ -109,26 +109,30 @@ inline void instruction::execute(ScalarType* registers) const {
     }
     case instruction_code::sin:
     {
+      using std::sin;
       registers[this->result_register] =
-        p3a::sine(registers[this->input_registers.left]);
+        sin(registers[this->input_registers.left]);
       break;
     }
     case instruction_code::cos:
     {
+      using std::cos;
       registers[this->result_register] =
-        p3a::cosine(registers[this->input_registers.left]);
+        cos(registers[this->input_registers.left]);
       break;
     }
     case instruction_code::exp:
     {
+      using std::exp;
       registers[this->result_register] =
-        p3a::natural_exponential(registers[this->input_registers.left]);
+        exp(registers[this->input_registers.left]);
       break;
     }
     case instruction_code::pow:
     {
+      using std::pow;
       registers[this->result_register] =
-        p3a::exponentiate(
+        pow(
             registers[this->input_registers.left],
             registers[this->input_registers.right]);
       break;
