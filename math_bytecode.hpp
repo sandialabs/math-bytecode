@@ -110,8 +110,9 @@ inline void instruction::execute(ScalarType* registers) const {
     }
     case instruction_code::sin:
     {
+      using std::sin;
       registers[this->result_register] =
-        p3a::sine(registers[this->input_registers.left]);
+        sin(registers[this->input_registers.left]);
       break;
     }
     case instruction_code::cos:
