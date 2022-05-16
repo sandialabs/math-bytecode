@@ -117,8 +117,9 @@ inline void instruction::execute(ScalarType* registers) const {
     }
     case instruction_code::cos:
     {
+      using std::cos;
       registers[this->result_register] =
-        p3a::cosine(registers[this->input_registers.left]);
+        cos(registers[this->input_registers.left]);
       break;
     }
     case instruction_code::exp:
