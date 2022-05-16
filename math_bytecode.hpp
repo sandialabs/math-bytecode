@@ -103,8 +103,9 @@ inline void instruction::execute(ScalarType* registers) const {
     }
     case instruction_code::sqrt:
     {
+      using std::sqrt;
       registers[this->result_register] =
-        p3a::square_root(registers[this->input_registers.left]);
+        sqrt(registers[this->input_registers.left]);
       break;
     }
     case instruction_code::sin:
