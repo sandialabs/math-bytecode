@@ -129,8 +129,9 @@ inline void instruction::execute(ScalarType* registers) const {
     }
     case instruction_code::pow:
     {
+      using std::pow;
       registers[this->result_register] =
-        p3a::exponentiate(
+        pow(
             registers[this->input_registers.left],
             registers[this->input_registers.right]);
       break;
