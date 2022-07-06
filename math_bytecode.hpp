@@ -103,37 +103,32 @@ inline void instruction::execute(ScalarType* registers) const {
     }
     case instruction_code::sqrt:
     {
-      using std::sqrt;
       registers[this->result_register] =
-        sqrt(registers[this->input_registers.left]);
+        p3a::sqrt(registers[this->input_registers.left]);
       break;
     }
     case instruction_code::sin:
     {
-      using std::sin;
       registers[this->result_register] =
-        sin(registers[this->input_registers.left]);
+        p3a::sin(registers[this->input_registers.left]);
       break;
     }
     case instruction_code::cos:
     {
-      using std::cos;
       registers[this->result_register] =
-        cos(registers[this->input_registers.left]);
+        p3a::cos(registers[this->input_registers.left]);
       break;
     }
     case instruction_code::exp:
     {
-      using std::exp;
       registers[this->result_register] =
-        exp(registers[this->input_registers.left]);
+        p3a::exp(registers[this->input_registers.left]);
       break;
     }
     case instruction_code::pow:
     {
-      using std::pow;
       registers[this->result_register] =
-        pow(
+        p3a::pow(
             registers[this->input_registers.left],
             registers[this->input_registers.right]);
       break;
