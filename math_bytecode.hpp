@@ -103,8 +103,9 @@ inline void instruction::execute(ScalarType* registers) const {
     }
     case instruction_code::sqrt:
     {
+      using std::sqrt;
       registers[this->result_register] =
-        p3a::square_root(registers[this->input_registers.left]);
+        sqrt(registers[this->input_registers.left]);
       break;
     }
     case instruction_code::sin:
@@ -489,7 +490,7 @@ class compiled_function {
     :m_register_count(other.register_count())
   {
     m_instructions.resize(other.instructions().size());
-    p3a::copy(p3a::device,
+    p3a::copy(m_instructions.get_execution_policy(),
         other.instructions().cbegin(),
         other.instructions().cend(),
         m_instructions.begin());
@@ -533,8 +534,8 @@ class compiled_function {
   int m_register_count;
 };
 
-using host_function = compiled_function<p3a::host_allocator<instruction>, p3a::host_execution>;
-using device_function = compiled_function<p3a::device_allocator<instruction>, p3a::device_execution>;
+using host_function = compiled_function<p3a::host_allocator<instruction>, p3a::execution::sequenced_policy>;
+using device_function = compiled_function<p3a::device_allocator<instruction>, p3a::execution::parallel_policy>;
 
 [[nodiscard]]
 host_function compile(std::string const& source_code, bool verbose = false);
