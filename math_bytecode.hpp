@@ -365,6 +365,25 @@ class executable_function {
   {
     return input_scalar_count;
   }
+  template <class ScalarType>
+  P3A_HOST_DEVICE P3A_ALWAYS_INLINE
+  inline int handle_input_argument(
+      ScalarType* registers,
+      int input_scalar_count,
+      p3a::vector3<ScalarType> const& argument) const
+  {
+    ScalarType const values[3] = {argument.x(), argument.y(), argument.z()};
+    return handle_input_argument(registers, input_scalar_count, values);
+  }
+  template <class ScalarType>
+  P3A_HOST_DEVICE P3A_ALWAYS_INLINE
+  inline int handle_input_argument(
+      ScalarType* registers,
+      int input_scalar_count,
+      p3a::vector3<ScalarType>& argument) const
+  {
+    return input_scalar_count;
+  }
   template <class ScalarType, class FirstArgumentType, class ... NextArgumentTypes>
   P3A_HOST_DEVICE P3A_ALWAYS_INLINE
   inline void handle_output_arguments(
@@ -441,6 +460,20 @@ class executable_function {
     argument.x() = p3a::quantity<Unit, ScalarType, Origin>(values[0]);
     argument.y() = p3a::quantity<Unit, ScalarType, Origin>(values[1]);
     argument.z() = p3a::quantity<Unit, ScalarType, Origin>(values[2]);
+    return output_scalar_count;
+  }
+  template <class ScalarType>
+  P3A_HOST_DEVICE P3A_ALWAYS_INLINE
+  inline int handle_output_argument(
+      ScalarType* registers,
+      int output_scalar_count,
+      p3a::vector3<ScalarType>& argument) const
+  {
+    ScalarType values[3];
+    output_scalar_count = handle_output_argument(registers, output_scalar_count, values);
+    argument.x() = values[0];
+    argument.y() = values[1];
+    argument.z() = values[2];
     return output_scalar_count;
   }
  private:

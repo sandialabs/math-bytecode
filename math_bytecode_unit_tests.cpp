@@ -16,15 +16,28 @@ TEST(compiled_function, copy_to_device)
 TEST(execute, on_host)
 {
   auto host_function = math_bytecode::compile(
-      "void density(const double x[3], const double t, double& rho) {\n"
-      "  rho = 1.0;\n"
+      "void density(const double x[3], double& rho) {\n"
+      "  rho = 1.0 + x[0];\n"
       "}\n");
   auto exe_function = host_function.executable();
   double registers[10];
   double const x[3] = {0, 0, 0};
-  double const t = 0;
   double rho;
-  exe_function(registers, t, rho);
+  exe_function(registers, x, rho);
+  EXPECT_EQ(rho, 1.0);
+}
+
+TEST(execute, vector3_double)
+{
+  auto host_function = math_bytecode::compile(
+      "void density(const double x[3], double& rho) {\n"
+      "  rho = 1.0 + x[0];\n"
+      "}\n");
+  auto exe_function = host_function.executable();
+  double registers[10];
+  p3a::vector3<double> const x(0, 0, 0);
+  double rho;
+  exe_function(registers, x, rho);
   EXPECT_EQ(rho, 1.0);
 }
 
