@@ -7,7 +7,11 @@ include(CMakePackageConfigHelpers)
 
 find_package(parsegen REQUIRED)
 find_package(p3a REQUIRED)
-find_package(GTest REQUIRED)
+
+if (BUILD_TESTING)
+  enable_testing()
+  find_package(GTest REQUIRED)
+endif()
 
 enable_language(${p3a_LANGUAGE})
 
@@ -46,14 +50,16 @@ install(
   NAMESPACE math-bytecode::
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/math-bytecode)
 
-set(unit_test_sources
-  math_bytecode_unit_tests.cpp
-  )
-set_source_files_properties(
-  ${unit_test_sources} PROPERTIES LANGUAGE ${p3a_LANGUAGE})
-add_executable(math-bytecode-unit-tests ${unit_test_sources})
-set_target_properties(math-bytecode-unit-tests PROPERTIES ${p3a_LANGUAGE}_ARCHITECTURES "${p3a_ARCHITECTURES}")
-target_link_libraries(math-bytecode-unit-tests PRIVATE math-bytecode)
-target_link_libraries(math-bytecode-unit-tests PRIVATE GTest::gtest)
-add_test(NAME unit-tests COMMAND math-bytecode-unit-tests)
+if (BUILD_TESTING)
+  set(unit_test_sources
+    math_bytecode_unit_tests.cpp
+    )
+  set_source_files_properties(
+    ${unit_test_sources} PROPERTIES LANGUAGE ${p3a_LANGUAGE})
+  add_executable(math-bytecode-unit-tests ${unit_test_sources})
+  set_target_properties(math-bytecode-unit-tests PROPERTIES ${p3a_LANGUAGE}_ARCHITECTURES "${p3a_ARCHITECTURES}")
+  target_link_libraries(math-bytecode-unit-tests PRIVATE math-bytecode)
+  target_link_libraries(math-bytecode-unit-tests PRIVATE GTest::gtest)
+  add_test(NAME unit-tests COMMAND math-bytecode-unit-tests)
+endif()
 

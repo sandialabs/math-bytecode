@@ -13,6 +13,21 @@ TEST(compiled_function, copy_to_device)
   math_bytecode::device_function df(hf);
 }
 
+TEST(execute, on_host)
+{
+  auto host_function = math_bytecode::compile(
+      "void density(const double x[3], const double t, double& rho) {\n"
+      "  rho = 1.0;\n"
+      "}\n");
+  auto exe_function = host_function.executable();
+  double registers[10];
+  double const x[3] = {0, 0, 0};
+  double const t = 0;
+  double rho;
+  exe_function(registers, t, rho);
+  EXPECT_EQ(rho, 1.0);
+}
+
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
   Kokkos::ScopeGuard kokkos_library_state(argc, argv);
