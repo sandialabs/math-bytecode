@@ -57,6 +57,11 @@ TEST(execute, input_scalars)
   EXPECT_EQ(result, 14.0);
 }
 
+TEST(compiled_function, default_constructor)
+{
+  math_bytecode::host_function hf;
+}
+
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
   Kokkos::ScopeGuard kokkos_library_state(argc, argv);

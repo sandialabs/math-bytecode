@@ -490,6 +490,7 @@ class compiled_function {
  public:
   using instructions_type = p3a::dynamic_array<::math_bytecode::instruction, Allocator, ExecutionPolicy>;
   using registers_type = p3a::dynamic_array<int, typename Allocator::template rebind<int>::other, ExecutionPolicy>;
+  compiled_function() = default;
   compiled_function(
       std::vector<instruction> const& instructions_in,
       std::vector<int> const& input_registers_in,
