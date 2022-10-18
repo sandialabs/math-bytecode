@@ -41,6 +41,22 @@ TEST(execute, vector3_double)
   EXPECT_EQ(rho, 1.0);
 }
 
+TEST(execute, input_scalars)
+{
+  auto host_function = math_bytecode::compile(
+      "void f(double x, const double y, double const z, double& result) {\n"
+      "  result = x * x + y * y + z * z;\n"
+      "}\n");
+  auto exe_function = host_function.executable();
+  double registers[10];
+  double const x = 1.0;
+  double const y = 2.0;
+  double const z = 3.0;
+  double result;
+  exe_function(registers, x, y, z, result);
+  EXPECT_EQ(result, 14.0);
+}
+
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
   Kokkos::ScopeGuard kokkos_library_state(argc, argv);
