@@ -58,16 +58,17 @@ enum production : std::size_t {
   production_next_parameter,
   production_input_scalar_parameter,
   production_output_scalar_parameter,
-  production_input_array_parameter,
-  production_output_array_parameter,
+  production_array_parameter,
   production_if,
   production_if_else,
   production_if_header,
   production_block,
   production_variable,
   production_array_entry,
-  production_type_double,
-  production_type_const_double,
+  production_first_declaration_specifier,
+  production_next_declaration_specifier,
+  production_const,
+  production_double,
   production_sum_or_difference,
   production_product_or_quotient,
   production_decay_to_negation,
@@ -150,11 +151,11 @@ parsegen::language build_language() {
   l.productions[production_assign] =
   {"statement", {"mutable", "assign", "immutable", "statement_end"}};
   l.productions[production_declare_assign] =
-  {"statement", {"type", "identifier", "assign", "immutable", "statement_end"}};
+  {"statement", {"declaration_specifiers", "identifier", "assign", "immutable", "statement_end"}};
   l.productions[production_declare_scalar] =
-  {"statement", {"type", "identifier", "statement_end"}};
+  {"statement", {"declaration_specifiers", "identifier", "statement_end"}};
   l.productions[production_declare_array] =
-  {"statement", {"type", "identifier", "open_array", "integer", "close_array", "statement_end"}};
+  {"statement", {"declaration_specifiers", "identifier", "open_array", "integer", "close_array", "statement_end"}};
   l.productions[production_define_function] =
   {"function_definition", {"function_signature", "block"}};
   l.productions[production_function_signature] =
@@ -164,13 +165,11 @@ parsegen::language build_language() {
   l.productions[production_next_parameter] =
   {"parameters", {"parameters", "argument_separator", "parameter"}};
   l.productions[production_input_scalar_parameter] =
-  {"parameter", {"const", "double", "identifier"}};
+  {"parameter", {"declaration_specifiers", "identifier"}};
   l.productions[production_output_scalar_parameter] =
   {"parameter", {"double", "reference", "identifier"}};
-  l.productions[production_input_array_parameter] =
-  {"parameter", {"const", "double", "identifier", "open_array", "integer", "close_array"}};
-  l.productions[production_output_array_parameter] =
-  {"parameter", {"double", "identifier", "open_array", "integer", "close_array"}};
+  l.productions[production_array_parameter] =
+  {"parameter", {"declaration_specifiers", "identifier", "open_array", "integer", "close_array"}};
   l.productions[production_if] =
   {"statement", {"if_header", "block"}};
   l.productions[production_if_else] =
@@ -183,10 +182,14 @@ parsegen::language build_language() {
   {"mutable", {"identifier"}};
   l.productions[production_array_entry] =
   {"mutable", {"identifier", "open_array", "integer", "close_array"}};
-  l.productions[production_type_double] =
-  {"type", {"double"}};
-  l.productions[production_type_const_double] =
-  {"type", {"const", "double"}};
+  l.productions[production_first_declaration_specifier] =
+  {"declaration_specifiers", {"declaration_specifier"}};
+  l.productions[production_next_declaration_specifier] =
+  {"declaration_specifiers", {"declaration_specifiers", "declaration_specifier"}};
+  l.productions[production_const] =
+  {"declaration_specifier", {"const"}};
+  l.productions[production_double] =
+  {"declaration_specifier", {"double"}};
   l.productions[production_sum_or_difference] =
   {"immutable", {"sum_or_difference"}};
   l.productions[production_product_or_quotient] =
@@ -664,7 +667,7 @@ class parser : public parsegen::parser
       }
       case production_input_scalar_parameter:
       {
-        input_variable_names.push_back(std::any_cast<std::string&&>(std::move(rhs.at(2))));
+        input_variable_names.push_back(std::any_cast<std::string&&>(std::move(rhs.at(1))));
         break;
       }
       case production_output_scalar_parameter:
@@ -672,21 +675,17 @@ class parser : public parsegen::parser
         output_variable_names.push_back(std::any_cast<std::string&&>(std::move(rhs.at(2))));
         break;
       }
-      case production_input_array_parameter:
+      case production_array_parameter:
       {
-        int const n = std::any_cast<int>(rhs.at(4));
-        std::string const name(std::any_cast<std::string&&>(std::move(rhs.at(2))));
-        for (int i = 0; i < n; ++i) {
-          input_variable_names.push_back(name + "[" + std::to_string(i) + "]");
-        }
-        break;
-      }
-      case production_output_array_parameter:
-      {
+        bool const is_const = std::any_cast<bool>(rhs.at(0));
         int const n = std::any_cast<int>(rhs.at(3));
         std::string const name(std::any_cast<std::string&&>(std::move(rhs.at(1))));
         for (int i = 0; i < n; ++i) {
-          output_variable_names.push_back(name + "[" + std::to_string(i) + "]");
+          if (is_const) {
+            input_variable_names.push_back(name + "[" + std::to_string(i) + "]");
+          } else {
+            output_variable_names.push_back(name + "[" + std::to_string(i) + "]");
+          }
         }
         break;
       }
@@ -860,6 +859,22 @@ class parser : public parsegen::parser
         op.constant = double(std::any_cast<int>(rhs.at(0)));
         named_instructions.push_back(op);
         return result;
+      }
+      case production_first_declaration_specifier:
+      {
+        return rhs.at(0);
+      }
+      case production_next_declaration_specifier:
+      {
+        return std::any_cast<bool>(rhs.at(0)) || std::any_cast<bool>(rhs.at(1));
+      }
+      case production_const:
+      {
+        return true;
+      }
+      case production_double:
+      {
+        return false;
       }
     }
     return std::any();
