@@ -62,6 +62,15 @@ TEST(compiled_function, default_constructor)
   math_bytecode::host_function hf;
 }
 
+TEST(language, comments)
+{
+  static_cast<void>(math_bytecode::compile(
+      "void f(double x, double y) {\n"
+      "  /* comments can be on their own line */\n"
+      "  /* or before the LHS */ result /* or after the LHS */ = x /* or before a plus */ + y; /* or after a line */\n"
+      "}\n"));
+}
+
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
   Kokkos::ScopeGuard kokkos_library_state(argc, argv);
