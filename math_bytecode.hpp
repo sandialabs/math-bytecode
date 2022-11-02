@@ -518,22 +518,10 @@ class compiled_function {
   explicit
   compiled_function(compiled_function<Allocator2, ExecutionPolicy2> const& other)
     :m_register_count(other.register_count())
+    ,m_instructions(other.instructions())
+    ,m_input_registers(other.input_registers())
+    ,m_output_registers(other.output_registers())
   {
-    m_instructions.resize(other.instructions().size());
-    p3a::copy(m_instructions.get_execution_policy(),
-        other.instructions().cbegin(),
-        other.instructions().cend(),
-        m_instructions.begin());
-    m_input_registers.resize(other.input_registers().size());
-    p3a::copy(m_input_registers.get_execution_policy(),
-        other.input_registers().cbegin(),
-        other.input_registers().cend(),
-        m_input_registers.begin());
-    m_output_registers.resize(other.output_registers().size());
-    p3a::copy(m_output_registers.get_execution_policy(),
-        other.output_registers().cbegin(),
-        other.output_registers().cend(),
-        m_output_registers.begin());
   }
   [[nodiscard]]
   executable_function executable() const
